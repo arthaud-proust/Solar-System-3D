@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { makeCockpit } from "./cockpit";
+import { makePlanet } from "./planets/planet";
 import { makeSun } from "./planets/sun";
 import { applyPostProcessing } from "./postprocessing";
 import { makeShip } from "./ship";
@@ -59,7 +60,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-const loadTexture = new THREE.TextureLoader();
+const textureLoader = new THREE.TextureLoader();
 
 const { outlinePass, composer } = applyPostProcessing({
   scene,
@@ -109,144 +110,11 @@ function onMouseMove(event) {
 // ******  SUN  ******
 const sunSize = 697 / 40; // 40 times smaller scale than earth
 const sun = makeSun({
-  loader: loadTexture,
+  textureLoader: textureLoader,
   size: sunSize,
   intensity: settings.sunIntensity,
 });
 scene.add(sun);
-
-//point light in the sun
-const pointLight = new THREE.PointLight(0xfdffd3, 1200, 400, 1.4);
-pointLight.shadow.mapSize.width = 1024;
-pointLight.shadow.mapSize.height = 1024;
-pointLight.shadow.camera.near = 10;
-pointLight.shadow.camera.far = 20;
-scene.add(pointLight);
-
-// ******  PLANET CREATION FUNCTION  ******
-function createPlanet(
-  planetName,
-  radius,
-  position,
-  tilt,
-  texture,
-  bump,
-  ring,
-  atmosphere,
-  moons
-) {
-  let material;
-  if (texture instanceof THREE.Material) {
-    material = texture;
-  } else if (bump) {
-    material = new THREE.MeshPhongMaterial({
-      map: loadTexture.load(texture),
-      bumpMap: loadTexture.load(bump),
-      bumpScale: 0.7,
-    });
-  } else {
-    material = new THREE.MeshPhongMaterial({
-      map: loadTexture.load(texture),
-    });
-  }
-
-  const name = planetName;
-  const geometry = new THREE.SphereGeometry(radius, 32, 20);
-  const planet = new THREE.Mesh(geometry, material);
-  const planet3d = new THREE.Object3D();
-  const planetSystem = new THREE.Group();
-  planetSystem.add(planet);
-  let Atmosphere;
-  let Ring;
-  planet.position.x = position;
-  planet.rotation.z = (tilt * Math.PI) / 180;
-
-  // add orbit path
-  const orbitPath = new THREE.EllipseCurve(
-    0,
-    0, // ax, aY
-    position,
-    position, // xRadius, yRadius
-    0,
-    2 * Math.PI, // aStartAngle, aEndAngle
-    false, // aClockwise
-    0 // aRotation
-  );
-
-  const pathPoints = orbitPath.getPoints(100);
-  const orbitGeometry = new THREE.BufferGeometry().setFromPoints(pathPoints);
-  const orbitMaterial = new THREE.LineBasicMaterial({
-    color: 0xffffff,
-    transparent: true,
-    opacity: 0.03,
-  });
-  const orbit = new THREE.LineLoop(orbitGeometry, orbitMaterial);
-  orbit.rotation.x = Math.PI / 2;
-  planetSystem.add(orbit);
-
-  //add ring
-  if (ring) {
-    const RingGeo = new THREE.RingGeometry(
-      ring.innerRadius,
-      ring.outerRadius,
-      30
-    );
-    const RingMat = new THREE.MeshStandardMaterial({
-      map: loadTexture.load(ring.texture),
-      side: THREE.DoubleSide,
-    });
-    Ring = new THREE.Mesh(RingGeo, RingMat);
-    planetSystem.add(Ring);
-    Ring.position.x = position;
-    Ring.rotation.x = -0.5 * Math.PI;
-    Ring.rotation.y = (-tilt * Math.PI) / 180;
-  }
-
-  //add atmosphere
-  if (atmosphere) {
-    const atmosphereGeom = new THREE.SphereGeometry(radius + 0.1, 32, 20);
-    const atmosphereMaterial = new THREE.MeshPhongMaterial({
-      map: loadTexture.load(atmosphere),
-      transparent: true,
-      opacity: 0.4,
-      depthTest: true,
-      depthWrite: false,
-    });
-    Atmosphere = new THREE.Mesh(atmosphereGeom, atmosphereMaterial);
-
-    Atmosphere.rotation.z = 0.41;
-    planet.add(Atmosphere);
-  }
-
-  //add moons
-  if (moons) {
-    moons.forEach((moon) => {
-      let moonMaterial;
-
-      if (moon.bump) {
-        moonMaterial = new THREE.MeshStandardMaterial({
-          map: loadTexture.load(moon.texture),
-          bumpMap: loadTexture.load(moon.bump),
-          bumpScale: 0.5,
-        });
-      } else {
-        moonMaterial = new THREE.MeshStandardMaterial({
-          map: loadTexture.load(moon.texture),
-        });
-      }
-      const moonGeometry = new THREE.SphereGeometry(moon.size, 32, 20);
-      const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
-      const moonOrbitDistance = radius * 1.5;
-      moonMesh.position.set(moonOrbitDistance, 0, 0);
-      planetSystem.add(moonMesh);
-      moon.mesh = moonMesh;
-    });
-  }
-  //add planet system to planet3d object and to the scene
-  planet3d.add(planetSystem);
-  scene.add(planet3d);
-  return { name, planet, planet3d, Atmosphere, moons, planetSystem, Ring };
-}
 
 // ******  LOADING OBJECTS METHOD  ******
 function loadObject(path, position, scale, callback) {
@@ -314,8 +182,8 @@ function loadAsteroids(
 // Earth day/night effect shader material
 const earthMaterial = new THREE.ShaderMaterial({
   uniforms: {
-    dayTexture: { type: "t", value: loadTexture.load(earthTexture) },
-    nightTexture: { type: "t", value: loadTexture.load(earthNightTexture) },
+    dayTexture: { type: "t", value: textureLoader.load(earthTexture) },
+    nightTexture: { type: "t", value: textureLoader.load(earthNightTexture) },
     sunPosition: { type: "v3", value: sun.position },
   },
   vertexShader: `
@@ -411,36 +279,52 @@ const jupiterMoons = [
 ];
 
 // ******  PLANET CREATIONS  ******
-const mercury = new createPlanet(
-  "Mercury",
-  2.4,
-  40,
-  0,
-  mercuryTexture,
-  mercuryBump
-);
-const venus = new createPlanet(
-  "Venus",
-  6.1,
-  65,
-  3,
-  venusTexture,
-  venusBump,
-  null,
-  venusAtmosphere
-);
-const earth = new createPlanet(
-  "Earth",
-  6.4,
-  90,
-  23,
-  earthMaterial,
-  null,
-  null,
-  earthAtmosphere,
-  earthMoon
-);
-const mars = new createPlanet("Mars", 3.4, 115, 25, marsTexture, marsBump);
+const mercury = makePlanet({
+  textureLoader,
+  name: "Mercury",
+  radiusKm: 2.4,
+  distanceKm: 40,
+  tiltAngle: 0,
+  texture: mercuryTexture,
+  bump: mercuryBump,
+});
+scene.add(mercury.group);
+
+const venus = makePlanet({
+  textureLoader,
+  name: "Venus",
+  radiusKm: 6.1,
+  distanceKm: 65,
+  tiltAngle: 3,
+  texture: venusTexture,
+  bump: venusBump,
+  atmosphere: venusAtmosphere,
+});
+scene.add(venus.group);
+
+const earth = makePlanet({
+  textureLoader,
+  name: "Earth",
+  radiusKm: 6.4,
+  distanceKm: 90,
+  tiltAngle: 23,
+  texture: earthMaterial,
+  atmosphere: earthAtmosphere,
+  moons: earthMoon,
+});
+scene.add(earth.group);
+
+const mars = makePlanet({
+  textureLoader,
+  name: "Mars",
+  radiusKm: 3.4,
+  distanceKm: 115,
+  tiltAngle: 25,
+  texture: marsTexture,
+  bump: marsBump,
+});
+scene.add(mars.group);
+
 // Load Mars moons
 marsMoons.forEach((moon) => {
   loadObject(moon.modelPath, moon.position, moon.scale, function (loadedModel) {
@@ -455,138 +339,74 @@ marsMoons.forEach((moon) => {
   });
 });
 
-const jupiter = new createPlanet(
-  "Jupiter",
-  69 / 4,
-  200,
-  3,
-  jupiterTexture,
-  null,
-  null,
-  null,
-  jupiterMoons
-);
-const saturn = new createPlanet(
-  "Saturn",
-  58 / 4,
-  270,
-  26,
-  saturnTexture,
-  null,
-  {
+const jupiter = makePlanet({
+  textureLoader,
+  name: "Jupiter",
+  radiusKm: 69 / 4,
+  distanceKm: 200,
+  tiltAngle: 3,
+  texture: jupiterTexture,
+  moons: jupiterMoons,
+});
+scene.add(jupiter.group);
+
+const saturn = makePlanet({
+  textureLoader,
+  name: "Saturn",
+  radiusKm: 58 / 4,
+  distanceKm: 270,
+  tiltAngle: 26,
+  texture: saturnTexture,
+  ring: {
     innerRadius: 18,
     outerRadius: 29,
     texture: satRingTexture,
-  }
-);
-const uranus = new createPlanet(
-  "Uranus",
-  25 / 4,
-  320,
-  82,
-  uranusTexture,
-  null,
-  {
+  },
+});
+scene.add(saturn.group);
+
+const uranus = makePlanet({
+  textureLoader,
+  name: "Uranus",
+  radiusKm: 25 / 4,
+  distanceKm: 320,
+  tiltAngle: 82,
+  texture: uranusTexture,
+  ring: {
     innerRadius: 6,
     outerRadius: 8,
     texture: uraRingTexture,
-  }
-);
-const neptune = new createPlanet("Neptune", 24 / 4, 340, 28, neptuneTexture);
-const pluto = new createPlanet("Pluto", 1, 350, 57, plutoTexture);
+  },
+});
+scene.add(saturn.group);
 
-// ******  PLANETS DATA  ******
-const planetData = {
-  Mercury: {
-    radius: "2,439.7 km",
-    tilt: "0.034°",
-    rotation: "58.6 Earth days",
-    orbit: "88 Earth days",
-    distance: "57.9 million km",
-    moons: "0",
-    info: "The smallest planet in our solar system and nearest to the Sun.",
-  },
-  Venus: {
-    radius: "6,051.8 km",
-    tilt: "177.4°",
-    rotation: "243 Earth days",
-    orbit: "225 Earth days",
-    distance: "108.2 million km",
-    moons: "0",
-    info: "Second planet from the Sun, known for its extreme temperatures and thick atmosphere.",
-  },
-  Earth: {
-    radius: "6,371 km",
-    tilt: "23.5°",
-    rotation: "24 hours",
-    orbit: "365 days",
-    distance: "150 million km",
-    moons: "1 (Moon)",
-    info: "Third planet from the Sun and the only known planet to harbor life.",
-  },
-  Mars: {
-    radius: "3,389.5 km",
-    tilt: "25.19°",
-    rotation: "1.03 Earth days",
-    orbit: "687 Earth days",
-    distance: "227.9 million km",
-    moons: "2 (Phobos and Deimos)",
-    info: "Known as the Red Planet, famous for its reddish appearance and potential for human colonization.",
-  },
-  Jupiter: {
-    radius: "69,911 km",
-    tilt: "3.13°",
-    rotation: "9.9 hours",
-    orbit: "12 Earth years",
-    distance: "778.5 million km",
-    moons: "95 known moons (Ganymede, Callisto, Europa, Io are the 4 largest)",
-    info: "The largest planet in our solar system, known for its Great Red Spot.",
-  },
-  Saturn: {
-    radius: "58,232 km",
-    tilt: "26.73°",
-    rotation: "10.7 hours",
-    orbit: "29.5 Earth years",
-    distance: "1.4 billion km",
-    moons: "146 known moons",
-    info: "Distinguished by its extensive ring system, the second-largest planet in our solar system.",
-  },
-  Uranus: {
-    radius: "25,362 km",
-    tilt: "97.77°",
-    rotation: "17.2 hours",
-    orbit: "84 Earth years",
-    distance: "2.9 billion km",
-    moons: "27 known moons",
-    info: "Known for its unique sideways rotation and pale blue color.",
-  },
-  Neptune: {
-    radius: "24,622 km",
-    tilt: "28.32°",
-    rotation: "16.1 hours",
-    orbit: "165 Earth years",
-    distance: "4.5 billion km",
-    moons: "14 known moons",
-    info: "The most distant planet from the Sun in our solar system, known for its deep blue color.",
-  },
-  Pluto: {
-    radius: "1,188.3 km",
-    tilt: "122.53°",
-    rotation: "6.4 Earth days",
-    orbit: "248 Earth years",
-    distance: "5.9 billion km",
-    moons: "5 (Charon, Styx, Nix, Kerberos, Hydra)",
-    info: "Originally classified as the ninth planet, Pluto is now considered a dwarf planet.",
-  },
-};
+const neptune = makePlanet({
+  textureLoader,
+  name: "Neptune",
+  radiusKm: 24 / 4,
+  distanceKm: 340,
+  tiltAngle: 28,
+  texture: neptuneTexture,
+});
+scene.add(neptune.group);
+
+const pluto = makePlanet({
+  textureLoader,
+  name: "Pluto",
+  radiusKm: 1,
+  distanceKm: 350,
+  tiltAngle: 57,
+  texture: plutoTexture,
+});
+scene.add(pluto.group);
 
 // Array of planets and atmospheres for raycasting
 const raycastTargets = [
   mercury.planet,
   venus.planet,
-  venus.Atmosphere,
+  venus.atmosphereMesh,
   earth.planet,
-  earth.Atmosphere,
+  earth.atmosphereMesh,
   mars.planet,
   jupiter.planet,
   saturn.planet,
@@ -597,13 +417,12 @@ const raycastTargets = [
 
 // ******  SHADOWS  ******
 renderer.shadowMap.enabled = true;
-pointLight.castShadow = true;
 
 //casting and receiving shadows
 earth.planet.castShadow = true;
 earth.planet.receiveShadow = true;
-earth.Atmosphere.castShadow = true;
-earth.Atmosphere.receiveShadow = true;
+earth.atmosphereMesh.castShadow = true;
+earth.atmosphereMesh.receiveShadow = true;
 earth.moons.forEach((moon) => {
   moon.mesh.castShadow = true;
   moon.mesh.receiveShadow = true;
@@ -612,7 +431,7 @@ mercury.planet.castShadow = true;
 mercury.planet.receiveShadow = true;
 venus.planet.castShadow = true;
 venus.planet.receiveShadow = true;
-venus.Atmosphere.receiveShadow = true;
+venus.atmosphereMesh.receiveShadow = true;
 mars.planet.castShadow = true;
 mars.planet.receiveShadow = true;
 jupiter.planet.castShadow = true;
@@ -623,7 +442,7 @@ jupiter.moons.forEach((moon) => {
 });
 saturn.planet.castShadow = true;
 saturn.planet.receiveShadow = true;
-saturn.Ring.receiveShadow = true;
+saturn.ringMesh.receiveShadow = true;
 uranus.planet.receiveShadow = true;
 neptune.planet.receiveShadow = true;
 pluto.planet.receiveShadow = true;
@@ -641,25 +460,25 @@ function animate() {
   //rotating planets around the sun and itself
   sun.rotateY(0.001 * settings.acceleration);
   mercury.planet.rotateY(0.001 * settings.acceleration);
-  mercury.planet3d.rotateY(0.004 * settings.accelerationOrbit);
+  mercury.group.rotateY(0.004 * settings.accelerationOrbit);
   venus.planet.rotateY(0.0005 * settings.acceleration);
-  venus.Atmosphere.rotateY(0.0005 * settings.acceleration);
-  venus.planet3d.rotateY(0.0006 * settings.accelerationOrbit);
+  venus.atmosphereMesh.rotateY(0.0005 * settings.acceleration);
+  venus.group.rotateY(0.0006 * settings.accelerationOrbit);
   earth.planet.rotateY(0.005 * settings.acceleration);
-  earth.Atmosphere.rotateY(0.001 * settings.acceleration);
-  earth.planet3d.rotateY(0.001 * settings.accelerationOrbit);
+  earth.atmosphereMesh.rotateY(0.001 * settings.acceleration);
+  earth.group.rotateY(0.001 * settings.accelerationOrbit);
   mars.planet.rotateY(0.01 * settings.acceleration);
-  mars.planet3d.rotateY(0.0007 * settings.accelerationOrbit);
+  mars.group.rotateY(0.0007 * settings.accelerationOrbit);
   jupiter.planet.rotateY(0.005 * settings.acceleration);
-  jupiter.planet3d.rotateY(0.0003 * settings.accelerationOrbit);
+  jupiter.group.rotateY(0.0003 * settings.accelerationOrbit);
   saturn.planet.rotateY(0.01 * settings.acceleration);
-  saturn.planet3d.rotateY(0.0002 * settings.accelerationOrbit);
+  saturn.group.rotateY(0.0002 * settings.accelerationOrbit);
   uranus.planet.rotateY(0.005 * settings.acceleration);
-  uranus.planet3d.rotateY(0.0001 * settings.accelerationOrbit);
+  uranus.group.rotateY(0.0001 * settings.accelerationOrbit);
   neptune.planet.rotateY(0.005 * settings.acceleration);
-  neptune.planet3d.rotateY(0.00008 * settings.accelerationOrbit);
+  neptune.group.rotateY(0.00008 * settings.accelerationOrbit);
   pluto.planet.rotateY(0.001 * settings.acceleration);
-  pluto.planet3d.rotateY(0.00006 * settings.accelerationOrbit);
+  pluto.group.rotateY(0.00006 * settings.accelerationOrbit);
 
   // Animate Earth's moon
   if (earth.moons) {
@@ -745,9 +564,9 @@ function animate() {
     const intersectedObject = intersects[0].object;
 
     // If the intersected object is an atmosphere, find the corresponding planet
-    if (intersectedObject === earth.Atmosphere) {
+    if (intersectedObject === earth.atmosphereMesh) {
       outlinePass.selectedObjects = [earth.planet];
-    } else if (intersectedObject === venus.Atmosphere) {
+    } else if (intersectedObject === venus.atmosphereMesh) {
       outlinePass.selectedObjects = [venus.planet];
     } else {
       // For other planets, outline the intersected object itself

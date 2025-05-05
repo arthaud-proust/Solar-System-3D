@@ -10,11 +10,11 @@ import {
 } from "three";
 
 export const makeSun = ({
-  loader,
+  textureLoader,
   intensity,
   size,
 }: {
-  loader: TextureLoader;
+  textureLoader: TextureLoader;
   size: number;
   intensity: number;
 }) => {
@@ -22,7 +22,7 @@ export const makeSun = ({
   const sunGeom = new SphereGeometry(size, 32, 20);
   const sunMat = new MeshStandardMaterial({
     emissive: 0xfff88f,
-    emissiveMap: loader.load(sunTexture),
+    emissiveMap: textureLoader.load(sunTexture),
     emissiveIntensity: intensity,
   });
   const sun = new Mesh(sunGeom, sunMat);
@@ -34,6 +34,8 @@ export const makeSun = ({
   pointLight.shadow.mapSize.height = 1024;
   pointLight.shadow.camera.near = 10;
   pointLight.shadow.camera.far = 20;
+  pointLight.castShadow = true;
+
   group.add(pointLight);
 
   return group;
