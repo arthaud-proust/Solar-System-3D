@@ -4,6 +4,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { makeCockpit } from "./cockpit";
 import { loadAsteroids } from "./planets/asteroids";
+import { makeEarth } from "./planets/earth";
 import { makePlanet } from "./planets/planet";
 import { makeSun } from "./planets/sun";
 import { applyPostProcessing } from "./postprocessing";
@@ -12,9 +13,6 @@ import bgTexture1 from "/images/1.jpg";
 import bgTexture2 from "/images/2.jpg";
 import bgTexture3 from "/images/3.jpg";
 import bgTexture4 from "/images/4.jpg";
-import earthAtmosphere from "/images/earth_atmosphere.jpg";
-import earthTexture from "/images/earth_daymap.jpg";
-import earthNightTexture from "/images/earth_nightmap.jpg";
 import jupiterTexture from "/images/jupiter.jpg";
 import callistoTexture from "/images/jupiterCallisto.jpg";
 import europaTexture from "/images/jupiterEuropa.jpg";
@@ -24,8 +22,6 @@ import marsBump from "/images/marsbump.jpg";
 import marsTexture from "/images/marsmap.jpg";
 import mercuryBump from "/images/mercurybump.jpg";
 import mercuryTexture from "/images/mercurymap.jpg";
-import earthMoonBump from "/images/moonbump.jpg";
-import earthMoonTexture from "/images/moonmap.jpg";
 import neptuneTexture from "/images/neptune.jpg";
 import plutoTexture from "/images/plutomap.jpg";
 import satRingTexture from "/images/saturn_ring.png";
@@ -160,57 +156,6 @@ loadAsteroids({
   onAsteroid,
 });
 
-// Earth day/night effect shader material
-const earthMaterial = new THREE.ShaderMaterial({
-  uniforms: {
-    dayTexture: { type: "t", value: textureLoader.load(earthTexture) },
-    nightTexture: { type: "t", value: textureLoader.load(earthNightTexture) },
-    sunPosition: { type: "v3", value: sun.position },
-  },
-  vertexShader: `
-    varying vec3 vNormal;
-    varying vec2 vUv;
-    varying vec3 vSunDirection;
-
-    uniform vec3 sunPosition;
-
-    void main() {
-      vUv = uv;
-      vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-      vNormal = normalize(modelMatrix * vec4(normal, 0.0)).xyz;
-      vSunDirection = normalize(sunPosition - worldPosition.xyz);
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `,
-  fragmentShader: `
-    uniform sampler2D dayTexture;
-    uniform sampler2D nightTexture;
-
-    varying vec3 vNormal;
-    varying vec2 vUv;
-    varying vec3 vSunDirection;
-
-    void main() {
-      float intensity = max(dot(vNormal, vSunDirection), 0.0);
-      vec4 dayColor = texture2D(dayTexture, vUv);
-      vec4 nightColor = texture2D(nightTexture, vUv)* 0.2;
-      gl_FragColor = mix(nightColor, dayColor, intensity);
-    }
-  `,
-});
-
-// ******  MOONS  ******
-// Earth
-const earthMoon = [
-  {
-    size: 1.6,
-    texture: earthMoonTexture,
-    bump: earthMoonBump,
-    orbitSpeed: 0.001 * settings.accelerationOrbit,
-    orbitRadius: 10,
-  },
-];
-
 // Mars' moons with path to 3D models (phobos & deimos)
 const marsMoons = [
   {
@@ -283,15 +228,10 @@ const venus = makePlanet({
 });
 scene.add(venus.group);
 
-const earth = makePlanet({
+const earth = makeEarth({
   textureLoader,
-  name: "Earth",
-  radiusKm: 6.4,
-  distanceKm: 90,
-  tiltAngle: 23,
-  texture: earthMaterial,
-  atmosphere: earthAtmosphere,
-  moons: earthMoon,
+  sunPosition: sun.position,
+  settings,
 });
 scene.add(earth.group);
 
