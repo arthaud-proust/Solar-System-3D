@@ -1,12 +1,10 @@
 import * as dat from "dat.gui";
 import * as THREE from "three";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { OutlinePass } from "three/addons/postprocessing/OutlinePass.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { makeCockpit } from "./cockpit";
+import { applyPostProcessing } from "./postprocessing";
+import { makeShip } from "./ship";
 import bgTexture1 from "/images/1.jpg";
 import bgTexture2 from "/images/2.jpg";
 import bgTexture3 from "/images/3.jpg";
@@ -41,85 +39,36 @@ import {
 const cockpit = makeCockpit();
 
 // ******  SETUP  ******
-console.log("Create the scene");
 const scene = new THREE.Scene();
-
-// Vaisseau (simple cube)
-const ship = new THREE.Object3D();
-const geometry = new THREE.BoxGeometry(1, 0.5, 2);
-const material = new THREE.MeshBasicMaterial({
-  color: 0x00ffcc,
-  wireframe: true,
-});
-const mesh = new THREE.Mesh(geometry, material);
-ship.add(mesh);
-
-console.log("Create a perspective projection camera");
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
   1000
 );
-
-// Caméra attachée au vaisseau
 camera.position.set(0, 0.2, 0);
 camera.rotation.set(0, 0, 0);
 
-// Vitesse et contrôles
-let speed = 0;
-const maxSpeed = 1;
-const acceleration = 0.01;
-const baseRotationSpeed = 1;
+const ship = makeShip({
+  camera,
+});
+scene.add(ship.obj);
 
-const keys = {};
-
-document.addEventListener("keydown", (e) => (keys[e.key.toLowerCase()] = true));
-document.addEventListener("keyup", (e) => (keys[e.key.toLowerCase()] = false));
-
-console.log("Create the renderer");
-const renderer = new THREE.WebGL1Renderer();
+const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-console.log("Set up texture loader");
-const cubeTextureLoader = new THREE.CubeTextureLoader();
 const loadTexture = new THREE.TextureLoader();
 
-// ******  POSTPROCESSING setup ******
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
-
-// ******  OUTLINE PASS  ******
-const outlinePass = new OutlinePass(
-  new THREE.Vector2(window.innerWidth, window.innerHeight),
+const { outlinePass, composer } = applyPostProcessing({
   scene,
-  camera
-);
-outlinePass.edgeStrength = 3;
-outlinePass.edgeGlow = 1;
-outlinePass.visibleEdgeColor.set(0xffffff);
-outlinePass.hiddenEdgeColor.set(0x190a05);
-composer.addPass(outlinePass);
-
-// ******  BLOOM PASS  ******
-const bloomPass = new UnrealBloomPass(
-  new THREE.Vector2(window.innerWidth, window.innerHeight),
-  1,
-  0.4,
-  0.85
-);
-bloomPass.threshold = 1;
-bloomPass.radius = 0.9;
-composer.addPass(bloomPass);
-
-// ****** AMBIENT LIGHT ******
-console.log("Add the ambient light");
-var lightAmbient = new THREE.AmbientLight(0x222222, 6);
-scene.add(lightAmbient);
+  camera,
+  renderer,
+});
 
 // ******  Star background  ******
+const cubeTextureLoader = new THREE.CubeTextureLoader();
 scene.background = cubeTextureLoader.load([
   bgTexture3,
   bgTexture1,
@@ -138,7 +87,7 @@ customContainer.appendChild(gui.domElement);
 const settings = {
   accelerationOrbit: 1,
   acceleration: 1,
-  sunIntensity: 1.9,
+  sunIntensity: 5,
 };
 
 gui.add(settings, "accelerationOrbit", 0, 10).onChange((value) => {});
@@ -157,110 +106,6 @@ function onMouseMove(event) {
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 }
 
-// ******  SELECT PLANET  ******
-let selectedPlanet = null;
-let isMovingTowardsPlanet = false;
-let targetCameraPosition = new THREE.Vector3();
-let offset;
-
-function onDocumentMouseDown(event) {
-  event.preventDefault();
-
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, camera);
-  var intersects = raycaster.intersectObjects(raycastTargets);
-
-  if (intersects.length > 0) {
-    const clickedObject = intersects[0].object;
-    selectedPlanet = identifyPlanet(clickedObject);
-    if (selectedPlanet) {
-      closeInfoNoZoomOut();
-
-      settings.accelerationOrbit = 0; // Stop orbital movement
-
-      // Update camera to look at the selected planet
-      const planetPosition = new THREE.Vector3();
-      selectedPlanet.planet.getWorldPosition(planetPosition);
-      controls.target.copy(planetPosition);
-      camera.lookAt(planetPosition); // Orient the camera towards the planet
-
-      targetCameraPosition
-        .copy(planetPosition)
-        .add(
-          camera.position
-            .clone()
-            .sub(planetPosition)
-            .normalize()
-            .multiplyScalar(offset)
-        );
-      isMovingTowardsPlanet = true;
-    }
-  }
-}
-
-function identifyPlanet(clickedObject) {
-  // Logic to identify which planet was clicked based on the clicked object, different offset for camera distance
-  if (clickedObject.material === mercury.planet.material) {
-    offset = 10;
-    return mercury;
-  } else if (clickedObject.material === venus.Atmosphere.material) {
-    offset = 25;
-    return venus;
-  } else if (clickedObject.material === earth.Atmosphere.material) {
-    offset = 25;
-    return earth;
-  } else if (clickedObject.material === mars.planet.material) {
-    offset = 15;
-    return mars;
-  } else if (clickedObject.material === jupiter.planet.material) {
-    offset = 50;
-    return jupiter;
-  } else if (clickedObject.material === saturn.planet.material) {
-    offset = 50;
-    return saturn;
-  } else if (clickedObject.material === uranus.planet.material) {
-    offset = 25;
-    return uranus;
-  } else if (clickedObject.material === neptune.planet.material) {
-    offset = 20;
-    return neptune;
-  } else if (clickedObject.material === pluto.planet.material) {
-    offset = 10;
-    return pluto;
-  }
-
-  return null;
-}
-
-// ******  SHOW PLANET INFO AFTER SELECTION  ******
-function showPlanetInfo(planet) {
-  var info = document.getElementById("planetInfo");
-  var name = document.getElementById("planetName");
-  var details = document.getElementById("planetDetails");
-
-  name.innerText = planet;
-  details.innerText = `Radius: ${planetData[planet].radius}\nTilt: ${planetData[planet].tilt}\nRotation: ${planetData[planet].rotation}\nOrbit: ${planetData[planet].orbit}\nDistance: ${planetData[planet].distance}\nMoons: ${planetData[planet].moons}\nInfo: ${planetData[planet].info}`;
-
-  info.style.display = "block";
-}
-let isZoomingOut = false;
-let zoomOutTargetPosition = new THREE.Vector3(-175, 115, 5);
-// close 'x' button function
-function closeInfo() {
-  var info = document.getElementById("planetInfo");
-  info.style.display = "none";
-  settings.accelerationOrbit = 1;
-  isZoomingOut = true;
-}
-window.closeInfo = closeInfo;
-// close info when clicking another planet
-function closeInfoNoZoomOut() {
-  var info = document.getElementById("planetInfo");
-  info.style.display = "none";
-  settings.accelerationOrbit = 1;
-}
 // ******  SUN  ******
 let sunMat;
 
@@ -791,34 +636,13 @@ pluto.planet.receiveShadow = true;
 
 let lastTime = performance.now();
 function animate() {
-  cockpit.updateSpeed(speed);
-
   const currentTime = performance.now();
   const delta = (currentTime - lastTime) / 1000; // en secondes
   lastTime = currentTime;
 
-  // Gestion de la vitesse
-  if (keys["arrowup"]) speed = Math.min(maxSpeed, speed + acceleration);
-  if (keys["arrowdown"]) speed = Math.max(0, speed - acceleration);
+  ship.update(delta);
 
-  const euler = new THREE.Euler(0, 0, 0, "YXZ");
-
-  const rotationSpeed = baseRotationSpeed * delta + speed / 100;
-  if (keys["z"]) euler.x -= rotationSpeed; // vers le bas (pitch +X)
-  if (keys["s"]) euler.x += rotationSpeed; // vers le haut (pitch -X)
-  if (keys["q"]) euler.y += rotationSpeed; // tourner à gauche (yaw +Y)
-  if (keys["d"]) euler.y -= rotationSpeed; // tourner à droite (yaw -Y)
-  if (keys["a"]) euler.z += rotationSpeed; // tourner à gauche (yaw +Y)
-  if (keys["e"]) euler.z -= rotationSpeed; // tourner à droite (yaw -Y)
-
-  const quaternion = new THREE.Quaternion().setFromEuler(euler);
-
-  const direction = new THREE.Vector3(0, 0, -1);
-  direction.applyQuaternion(ship.quaternion);
-  ship.quaternion.multiply(quaternion);
-  ship.position.addScaledVector(direction, speed);
-  camera.position.copy(ship.position);
-  camera.quaternion.copy(ship.quaternion);
+  cockpit.updateSpeed(ship.speed());
 
   //rotating planets around the sun and itself
   sun.rotateY(0.001 * settings.acceleration);
@@ -945,7 +769,6 @@ loadAsteroids("/asteroids/asteroidPack.glb", 3000, 352, 370);
 animate();
 
 window.addEventListener("mousemove", onMouseMove, false);
-window.addEventListener("mousedown", onDocumentMouseDown, false);
 window.addEventListener("resize", function () {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
