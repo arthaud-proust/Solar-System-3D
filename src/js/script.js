@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { makeCockpit } from "./cockpit";
+import { makeSun } from "./planets/sun";
 import { applyPostProcessing } from "./postprocessing";
 import { makeShip } from "./ship";
 import bgTexture1 from "/images/1.jpg";
@@ -27,7 +28,6 @@ import neptuneTexture from "/images/neptune.jpg";
 import plutoTexture from "/images/plutomap.jpg";
 import satRingTexture from "/images/saturn_ring.png";
 import saturnTexture from "/images/saturnmap.jpg";
-import sunTexture from "/images/sun.jpg";
 import uranusTexture from "/images/uranus.jpg";
 import uraRingTexture from "/images/uranus_ring.png";
 import venusAtmosphere from "/images/venus_atmosphere.jpg";
@@ -107,20 +107,20 @@ function onMouseMove(event) {
 }
 
 // ******  SUN  ******
-let sunMat;
-
 const sunSize = 697 / 40; // 40 times smaller scale than earth
-const sunGeom = new THREE.SphereGeometry(sunSize, 32, 20);
-sunMat = new THREE.MeshStandardMaterial({
-  emissive: 0xfff88f,
-  emissiveMap: loadTexture.load(sunTexture),
-  emissiveIntensity: settings.sunIntensity,
+const sun = makeSun({
+  loader: loadTexture,
+  size: sunSize,
+  intensity: settings.sunIntensity,
 });
-const sun = new THREE.Mesh(sunGeom, sunMat);
 scene.add(sun);
 
 //point light in the sun
 const pointLight = new THREE.PointLight(0xfdffd3, 1200, 400, 1.4);
+pointLight.shadow.mapSize.width = 1024;
+pointLight.shadow.mapSize.height = 1024;
+pointLight.shadow.camera.near = 10;
+pointLight.shadow.camera.far = 20;
 scene.add(pointLight);
 
 // ******  PLANET CREATION FUNCTION  ******
@@ -598,12 +598,6 @@ const raycastTargets = [
 // ******  SHADOWS  ******
 renderer.shadowMap.enabled = true;
 pointLight.castShadow = true;
-
-//properties for the point light
-pointLight.shadow.mapSize.width = 1024;
-pointLight.shadow.mapSize.height = 1024;
-pointLight.shadow.camera.near = 10;
-pointLight.shadow.camera.far = 20;
 
 //casting and receiving shadows
 earth.planet.castShadow = true;
