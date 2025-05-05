@@ -23,7 +23,7 @@ type Ring = {
 
 export const makePlanet = ({
   textureLoader,
-  planetName,
+  name,
   radiusKm,
   distanceKm,
   tiltAngle,
@@ -34,7 +34,7 @@ export const makePlanet = ({
   moons,
 }: {
   textureLoader: TextureLoader;
-  planetName: string;
+  name: string;
   radiusKm: number;
   distanceKm: number;
   tiltAngle: number;
@@ -59,7 +59,6 @@ export const makePlanet = ({
     });
   }
 
-  const name = planetName;
   const geometry = new SphereGeometry(radiusKm, 32, 20);
   const planet = new Mesh(geometry, material);
   const group = new Object3D();
@@ -68,6 +67,8 @@ export const makePlanet = ({
 
   planet.position.x = distanceKm;
   planet.rotation.z = (tiltAngle * Math.PI) / 180;
+  planet.castShadow = true;
+  planet.receiveShadow = true;
 
   // add orbit path
   const orbitPath = new EllipseCurve(
@@ -121,6 +122,9 @@ export const makePlanet = ({
     atmosphereMesh = new Mesh(atmosphereGeom, atmosphereMaterial);
 
     atmosphereMesh.rotation.z = 0.41;
+    atmosphereMesh.castShadow = true;
+    atmosphereMesh.receiveShadow = true;
+
     planet.add(atmosphereMesh);
   }
 
@@ -138,7 +142,11 @@ export const makePlanet = ({
       const moonGeometry = new SphereGeometry(moon.size, 32, 20);
       const moonMesh = new Mesh(moonGeometry, moonMaterial);
       const moonOrbitDistance = radiusKm * 1.5;
+
       moonMesh.position.set(moonOrbitDistance, 0, 0);
+      moonMesh.castShadow = true;
+      moonMesh.receiveShadow = true;
+
       planetSystem.add(moonMesh);
       moon.mesh = moonMesh;
     });

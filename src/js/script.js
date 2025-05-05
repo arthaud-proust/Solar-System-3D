@@ -61,6 +61,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = true;
 
 const textureLoader = new THREE.TextureLoader();
 
@@ -394,38 +395,6 @@ const raycastTargets = [
   neptune.planet,
   pluto.planet,
 ];
-
-// ******  SHADOWS  ******
-renderer.shadowMap.enabled = true;
-
-//casting and receiving shadows
-earth.planet.castShadow = true;
-earth.planet.receiveShadow = true;
-earth.atmosphereMesh.castShadow = true;
-earth.atmosphereMesh.receiveShadow = true;
-earth.moons.forEach((moon) => {
-  moon.mesh.castShadow = true;
-  moon.mesh.receiveShadow = true;
-});
-mercury.planet.castShadow = true;
-mercury.planet.receiveShadow = true;
-venus.planet.castShadow = true;
-venus.planet.receiveShadow = true;
-venus.atmosphereMesh.receiveShadow = true;
-mars.planet.castShadow = true;
-mars.planet.receiveShadow = true;
-jupiter.planet.castShadow = true;
-jupiter.planet.receiveShadow = true;
-jupiter.moons.forEach((moon) => {
-  moon.mesh.castShadow = true;
-  moon.mesh.receiveShadow = true;
-});
-saturn.planet.castShadow = true;
-saturn.planet.receiveShadow = true;
-saturn.ringMesh.receiveShadow = true;
-uranus.planet.receiveShadow = true;
-neptune.planet.receiveShadow = true;
-pluto.planet.receiveShadow = true;
 
 let lastTime = performance.now();
 function animate() {
