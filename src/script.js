@@ -239,7 +239,7 @@ scene.add(pointLight);
 
 
 // ******  PLANET CREATION FUNCTION  ******
-function createPlanet(planetName, size, position, tilt, texture, bump, ring, atmosphere, moons){
+function createPlanet(planetName, radius, position, tilt, texture, bump, ring, atmosphere, moons){
 
   let material;
   if (texture instanceof THREE.Material){
@@ -259,7 +259,7 @@ function createPlanet(planetName, size, position, tilt, texture, bump, ring, atm
   } 
 
   const name = planetName;
-  const geometry = new THREE.SphereGeometry(size, 32, 20);
+  const geometry = new THREE.SphereGeometry(radius, 32, 20);
   const planet = new THREE.Mesh(geometry, material);
   const planet3d = new THREE.Object3D;
   const planetSystem = new THREE.Group();
@@ -302,7 +302,7 @@ function createPlanet(planetName, size, position, tilt, texture, bump, ring, atm
   
   //add atmosphere
   if(atmosphere){
-    const atmosphereGeom = new THREE.SphereGeometry(size+0.1, 32, 20);
+    const atmosphereGeom = new THREE.SphereGeometry(radius+0.1, 32, 20);
     const atmosphereMaterial = new THREE.MeshPhongMaterial({
       map:loadTexture.load(atmosphere),
       transparent: true,
@@ -334,7 +334,7 @@ function createPlanet(planetName, size, position, tilt, texture, bump, ring, atm
       }
       const moonGeometry = new THREE.SphereGeometry(moon.size, 32, 20);
       const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
-      const moonOrbitDistance = size * 1.5;
+      const moonOrbitDistance = radius * 1.5;
       moonMesh.position.set(moonOrbitDistance, 0, 0);
       planetSystem.add(moonMesh);
       moon.mesh = moonMesh;
