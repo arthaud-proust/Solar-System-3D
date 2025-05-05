@@ -2,6 +2,7 @@ import * as dat from "dat.gui";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+import { loadBackground } from "./background";
 import { makeCockpit } from "./cockpit";
 import { loadAsteroids } from "./planets/asteroids";
 import { makeEarth } from "./planets/earth";
@@ -9,10 +10,7 @@ import { makePlanet } from "./planets/planet";
 import { makeSun } from "./planets/sun";
 import { applyPostProcessing } from "./postprocessing";
 import { makeShip } from "./ship";
-import bgTexture1 from "/images/1.jpg";
-import bgTexture2 from "/images/2.jpg";
-import bgTexture3 from "/images/3.jpg";
-import bgTexture4 from "/images/4.jpg";
+
 import jupiterTexture from "/images/jupiter.jpg";
 import callistoTexture from "/images/jupiterCallisto.jpg";
 import europaTexture from "/images/jupiterEuropa.jpg";
@@ -60,6 +58,7 @@ renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
 const textureLoader = new THREE.TextureLoader();
+const cubeTextureLoader = new THREE.CubeTextureLoader();
 
 const { outlinePass, composer } = applyPostProcessing({
   scene,
@@ -67,16 +66,7 @@ const { outlinePass, composer } = applyPostProcessing({
   renderer,
 });
 
-// ******  Star background  ******
-const cubeTextureLoader = new THREE.CubeTextureLoader();
-scene.background = cubeTextureLoader.load([
-  bgTexture3,
-  bgTexture1,
-  bgTexture2,
-  bgTexture2,
-  bgTexture4,
-  bgTexture2,
-]);
+scene.background = loadBackground({ cubeTextureLoader });
 
 // ******  CONTROLS  ******
 const gui = new dat.GUI({ autoPlace: false });
