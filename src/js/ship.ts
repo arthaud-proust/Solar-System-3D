@@ -52,14 +52,14 @@ const keyboardControls: Controls = () => {
 
 export const makeShip = ({ camera }: { camera: Camera }) => {
   // Vaisseau (simple cube)
-  const shipObj = new Object3D();
+  const group = new Object3D();
   const geometry = new BoxGeometry(1, 0.5, 2);
   const material = new MeshBasicMaterial({
     color: 0x00ffcc,
     wireframe: true,
   });
   const mesh = new Mesh(geometry, material);
-  //   shipObj.add(mesh);
+  //   group.add(mesh);
 
   // Vitesse et contrôles
   let speed = 0;
@@ -89,16 +89,16 @@ export const makeShip = ({ camera }: { camera: Camera }) => {
     const quaternion = new Quaternion().setFromEuler(euler);
 
     const direction = new Vector3(0, 0, -1);
-    direction.applyQuaternion(shipObj.quaternion);
-    shipObj.quaternion.multiply(quaternion);
-    shipObj.position.addScaledVector(direction, speed);
-    camera.position.copy(shipObj.position);
-    camera.quaternion.copy(shipObj.quaternion);
+    direction.applyQuaternion(group.quaternion);
+    group.quaternion.multiply(quaternion);
+    group.position.addScaledVector(direction, speed);
+    camera.position.copy(group.position);
+    camera.quaternion.copy(group.quaternion);
   };
 
   return {
     update,
     speed: () => speed,
-    obj: shipObj,
+    group,
   };
 };

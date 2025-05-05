@@ -44,20 +44,20 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-camera.position.set(0, 0.2, 0);
+camera.position.set(0, 0, 0);
 camera.rotation.set(0, 0, 0);
 
 const ship = makeShip({
   camera,
 });
-scene.add(ship.obj);
+scene.add(ship.group);
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
 
 const textureLoader = new THREE.TextureLoader();
 
