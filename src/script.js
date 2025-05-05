@@ -4,9 +4,9 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { OutlinePass } from "three/addons/postprocessing/OutlinePass.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+import { makeCockpit } from "./cockpit";
 import bgTexture1 from "/images/1.jpg";
 import bgTexture2 from "/images/2.jpg";
 import bgTexture3 from "/images/3.jpg";
@@ -38,30 +38,50 @@ import {
   default as venusTexture,
 } from "/images/venusmap.jpg";
 
+const cockpit = makeCockpit();
+
 // ******  SETUP  ******
 console.log("Create the scene");
 const scene = new THREE.Scene();
 
+// Vaisseau (simple cube)
+const ship = new THREE.Object3D();
+const geometry = new THREE.BoxGeometry(1, 0.5, 2);
+const material = new THREE.MeshBasicMaterial({
+  color: 0x00ffcc,
+  wireframe: true,
+});
+const mesh = new THREE.Mesh(geometry, material);
+ship.add(mesh);
+
 console.log("Create a perspective projection camera");
-var camera = new THREE.PerspectiveCamera(
-  45,
+const camera = new THREE.PerspectiveCamera(
+  75,
   window.innerWidth / window.innerHeight,
   0.1,
   1000
 );
-camera.position.set(-175, 115, 5);
+
+// Caméra attachée au vaisseau
+camera.position.set(0, 0.2, 0);
+camera.rotation.set(0, 0, 0);
+
+// Vitesse et contrôles
+let speed = 0;
+const maxSpeed = 1;
+const acceleration = 0.01;
+const baseRotationSpeed = 1;
+
+const keys = {};
+
+document.addEventListener("keydown", (e) => (keys[e.key.toLowerCase()] = true));
+document.addEventListener("keyup", (e) => (keys[e.key.toLowerCase()] = false));
 
 console.log("Create the renderer");
 const renderer = new THREE.WebGL1Renderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-
-console.log("Create an orbit control");
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.75;
-controls.screenSpacePanning = false;
 
 console.log("Set up texture loader");
 const cubeTextureLoader = new THREE.CubeTextureLoader();
@@ -233,7 +253,6 @@ function closeInfo() {
   info.style.display = "none";
   settings.accelerationOrbit = 1;
   isZoomingOut = true;
-  controls.target.set(0, 0, 0);
 }
 window.closeInfo = closeInfo;
 // close info when clicking another planet
@@ -770,7 +789,37 @@ uranus.planet.receiveShadow = true;
 neptune.planet.receiveShadow = true;
 pluto.planet.receiveShadow = true;
 
+let lastTime = performance.now();
 function animate() {
+  cockpit.updateSpeed(speed);
+
+  const currentTime = performance.now();
+  const delta = (currentTime - lastTime) / 1000; // en secondes
+  lastTime = currentTime;
+
+  // Gestion de la vitesse
+  if (keys["arrowup"]) speed = Math.min(maxSpeed, speed + acceleration);
+  if (keys["arrowdown"]) speed = Math.max(0, speed - acceleration);
+
+  const euler = new THREE.Euler(0, 0, 0, "YXZ");
+
+  const rotationSpeed = baseRotationSpeed * delta + speed / 100;
+  if (keys["z"]) euler.x -= rotationSpeed; // vers le bas (pitch +X)
+  if (keys["s"]) euler.x += rotationSpeed; // vers le haut (pitch -X)
+  if (keys["q"]) euler.y += rotationSpeed; // tourner à gauche (yaw +Y)
+  if (keys["d"]) euler.y -= rotationSpeed; // tourner à droite (yaw -Y)
+  if (keys["a"]) euler.z += rotationSpeed; // tourner à gauche (yaw +Y)
+  if (keys["e"]) euler.z -= rotationSpeed; // tourner à droite (yaw -Y)
+
+  const quaternion = new THREE.Quaternion().setFromEuler(euler);
+
+  const direction = new THREE.Vector3(0, 0, -1);
+  direction.applyQuaternion(ship.quaternion);
+  ship.quaternion.multiply(quaternion);
+  ship.position.addScaledVector(direction, speed);
+  camera.position.copy(ship.position);
+  camera.quaternion.copy(ship.quaternion);
+
   //rotating planets around the sun and itself
   sun.rotateY(0.001 * settings.acceleration);
   mercury.planet.rotateY(0.001 * settings.acceleration);
@@ -887,25 +936,7 @@ function animate() {
       outlinePass.selectedObjects = [intersectedObject];
     }
   }
-  // ******  ZOOM IN/OUT  ******
-  if (isMovingTowardsPlanet) {
-    // Smoothly move the camera towards the target position
-    camera.position.lerp(targetCameraPosition, 0.03);
 
-    // Check if the camera is close to the target position
-    if (camera.position.distanceTo(targetCameraPosition) < 1) {
-      isMovingTowardsPlanet = false;
-      showPlanetInfo(selectedPlanet.name);
-    }
-  } else if (isZoomingOut) {
-    camera.position.lerp(zoomOutTargetPosition, 0.05);
-
-    if (camera.position.distanceTo(zoomOutTargetPosition) < 1) {
-      isZoomingOut = false;
-    }
-  }
-
-  controls.update();
   requestAnimationFrame(animate);
   composer.render();
 }
