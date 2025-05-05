@@ -1,4 +1,10 @@
-import { ShaderMaterial, type TextureLoader, type Vector3 } from "three";
+import { ShaderMaterial, TextureLoader, type Vector3 } from "three";
+import type { PlanetData } from "../planets";
+import { atmosphereMesh } from "./factory/atmosphere";
+import {
+  starMaterialFromTextureAndBump,
+  starMeshFromMaterial,
+} from "./factory/star";
 import { makePlanet } from "./planet";
 import earthAtmosphere from "/images/earth_atmosphere.jpg";
 import earthTexture from "/images/earth_daymap.jpg";
@@ -7,16 +13,23 @@ import earthMoonBump from "/images/moonbump.jpg";
 import earthMoonTexture from "/images/moonmap.jpg";
 
 export const makeEarth = ({
-  textureLoader,
+  name,
+  orbitRadiusInKm,
+  orbitRevolutionInEarthDays,
+  radiusInKm,
+  revolutionInEarthDays,
+  tiltInDegree,
+  moons,
+
   sunPosition,
   settings,
-}: {
-  textureLoader: TextureLoader;
+}: PlanetData & {
   sunPosition: Vector3;
   settings: {
     accelerationOrbit: number;
   };
 }) => {
+  const textureLoader = new TextureLoader();
   // Earth day/night effect shader material
   const earthMaterial = new ShaderMaterial({
     uniforms: {
@@ -56,41 +69,33 @@ export const makeEarth = ({
   `,
   });
 
-  // ******  MOONS  ******
-  // Earth
-  const earthMoon = [
-    {
-      size: 1.6,
-      texture: earthMoonTexture,
-      bump: earthMoonBump,
-      orbitSpeed: 0.001 * settings.accelerationOrbit,
-      orbitRadius: 10,
-    },
-  ];
-
   const earth = makePlanet({
-    textureLoader,
-    name: "Earth",
-    radiusKm: 6.4,
-    distanceKm: 90,
-    tiltAngle: 23,
-    texture: earthMaterial,
-    atmosphere: earthAtmosphere,
-    moons: earthMoon,
-  });
+    name,
+    orbitRadiusInKm,
+    orbitRevolutionInEarthDays,
+    radiusInKm,
+    revolutionInEarthDays,
+    tiltInDegree,
 
-  earth.planet.castShadow = true;
-  earth.planet.receiveShadow = true;
-  if (earth.atmosphereMesh) {
-    earth.atmosphereMesh.castShadow = true;
-    earth.atmosphereMesh.receiveShadow = true;
-    if (earth.moons) {
-      earth.moons.forEach((moon) => {
-        moon.mesh.castShadow = true;
-        moon.mesh.receiveShadow = true;
-      });
-    }
-  }
+    planet: starMeshFromMaterial({
+      radiusInKm,
+      material: earthMaterial,
+    }),
+    atmosphere: atmosphereMesh({
+      radiusInKm,
+      texture: earthAtmosphere,
+    }),
+    moons: moons.map((moon) => ({
+      ...moon,
+      mesh: starMeshFromMaterial({
+        material: starMaterialFromTextureAndBump({
+          texture: earthMoonTexture,
+          bump: earthMoonBump,
+        }),
+        radiusInKm,
+      }),
+    })),
+  });
 
   return earth;
 };

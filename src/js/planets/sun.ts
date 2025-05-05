@@ -1,20 +1,19 @@
 import sunTexture from "/images/sun.jpg";
 
 import {
+  DoubleSide,
   Group,
   Mesh,
   MeshStandardMaterial,
   PointLight,
   SphereGeometry,
-  type TextureLoader,
+  TextureLoader,
 } from "three";
 
 export const makeSun = ({
-  textureLoader,
   intensity,
   size,
 }: {
-  textureLoader: TextureLoader;
   size: number;
   intensity: number;
 }) => {
@@ -22,8 +21,9 @@ export const makeSun = ({
   const sunGeom = new SphereGeometry(size, 32, 20);
   const sunMat = new MeshStandardMaterial({
     emissive: 0xfff88f,
-    emissiveMap: textureLoader.load(sunTexture),
+    emissiveMap: new TextureLoader().load(sunTexture),
     emissiveIntensity: intensity,
+    side: DoubleSide,
   });
   const sun = new Mesh(sunGeom, sunMat);
   group.add(sun);

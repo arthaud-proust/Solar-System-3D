@@ -53,6 +53,7 @@ const keyboardControls: Controls = () => {
 export const makeShip = ({ camera }: { camera: Camera }) => {
   // Vaisseau (simple cube)
   const group = new Object3D();
+  group.position.copy(camera.position);
   const geometry = new BoxGeometry(1, 0.5, 2);
   const material = new MeshBasicMaterial({
     color: 0x00ffcc,
@@ -63,8 +64,8 @@ export const makeShip = ({ camera }: { camera: Camera }) => {
 
   // Vitesse et contrôles
   let speed = 0;
-  const maxSpeed = 1;
-  const acceleration = 0.01;
+  const maxSpeed = 10000;
+  const acceleration = maxSpeed / 10;
   const baseRotationSpeed = 1;
 
   const controls = keyboardControls();
@@ -78,7 +79,7 @@ export const makeShip = ({ camera }: { camera: Camera }) => {
 
     const euler = new Euler(0, 0, 0, "YXZ");
 
-    const rotationSpeed = baseRotationSpeed * delta + speed / 100;
+    const rotationSpeed = baseRotationSpeed * delta;
     if (moves.pitchDown) euler.x -= rotationSpeed;
     if (moves.pitchUp) euler.x += rotationSpeed;
     if (moves.yawLeft) euler.y += rotationSpeed;

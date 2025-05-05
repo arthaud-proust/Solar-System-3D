@@ -1,81 +1,51 @@
 import {
   BufferGeometry,
-  DoubleSide,
   EllipseCurve,
   Group,
   LineBasicMaterial,
   LineLoop,
-  Material,
   Mesh,
-  MeshPhongMaterial,
-  MeshStandardMaterial,
   Object3D,
-  RingGeometry,
-  SphereGeometry,
-  type TextureLoader,
 } from "three";
+import type { MoonData, PlanetData } from "../planets";
 
-type Ring = {
-  innerRadius: number;
-  outerRadius: number;
-  texture: string;
+type Moon = MoonData & {
+  mesh: Mesh;
 };
 
 export const makePlanet = ({
-  textureLoader,
   name,
-  radiusKm,
-  distanceKm,
-  tiltAngle,
-  texture,
-  bump,
+  orbitRadiusInKm,
+  orbitRevolutionInEarthDays,
+  radiusInKm,
+  revolutionInEarthDays,
+  tiltInDegree,
+
+  planet,
   ring,
   atmosphere,
   moons,
-}: {
-  textureLoader: TextureLoader;
-  name: string;
-  radiusKm: number;
-  distanceKm: number;
-  tiltAngle: number;
-  texture: Material | string;
-  bump?: string;
-  ring?: Ring;
-  atmosphere?: string;
-  moons?: Array<any>;
+}: Omit<PlanetData, "moons" | "ring"> & {
+  planet: Mesh;
+  ring?: Mesh;
+  atmosphere?: Mesh;
+  moons?: Array<Moon>;
 }) => {
-  let material: Material;
-  if (texture instanceof Material) {
-    material = texture;
-  } else if (bump) {
-    material = new MeshPhongMaterial({
-      map: textureLoader.load(texture),
-      bumpMap: textureLoader.load(bump),
-      bumpScale: 0.7,
-    });
-  } else {
-    material = new MeshPhongMaterial({
-      map: textureLoader.load(texture),
-    });
-  }
-
-  const geometry = new SphereGeometry(radiusKm, 32, 20);
-  const planet = new Mesh(geometry, material);
   const group = new Object3D();
   const planetSystem = new Group();
-  planetSystem.add(planet);
 
-  planet.position.x = distanceKm;
-  planet.rotation.z = (tiltAngle * Math.PI) / 180;
+  planet.position.x = orbitRadiusInKm;
+  planet.rotation.z = (tiltInDegree * Math.PI) / 180;
   planet.castShadow = true;
   planet.receiveShadow = true;
+  planetSystem.add(planet);
 
   // add orbit path
   const orbitPath = new EllipseCurve(
     0,
     0, // ax, aY
-    distanceKm,
-    distanceKm, // xRadius, yRadius
+    orbitRadiusInKm,
+    orbitRadiusInKm, // xRadius, yRadius
     0,
     2 * Math.PI, // aStartAngle, aEndAngle
     false, // aClockwise
@@ -93,73 +63,41 @@ export const makePlanet = ({
   orbit.rotation.x = Math.PI / 2;
   planetSystem.add(orbit);
 
-  //add ring
-  let ringMesh: Mesh | undefined;
   if (ring) {
-    const RingGeo = new RingGeometry(ring.innerRadius, ring.outerRadius, 30);
-    const RingMat = new MeshStandardMaterial({
-      map: textureLoader.load(ring.texture),
-      side: DoubleSide,
-    });
-    ringMesh = new Mesh(RingGeo, RingMat);
-    planetSystem.add(ringMesh);
-    ringMesh.position.x = distanceKm;
-    ringMesh.rotation.x = -0.5 * Math.PI;
-    ringMesh.rotation.y = (-tiltAngle * Math.PI) / 180;
+    ring.position.x = orbitRadiusInKm;
+    ring.rotation.x = -0.5 * Math.PI;
+    ring.rotation.y = (-tiltInDegree * Math.PI) / 180;
+    planetSystem.add(ring);
   }
 
-  //add atmosphere
-  let atmosphereMesh: Mesh | undefined;
   if (atmosphere) {
-    const atmosphereGeom = new SphereGeometry(radiusKm + 0.1, 32, 20);
-    const atmosphereMaterial = new MeshPhongMaterial({
-      map: textureLoader.load(atmosphere),
-      transparent: true,
-      opacity: 0.4,
-      depthTest: true,
-      depthWrite: false,
-    });
-    atmosphereMesh = new Mesh(atmosphereGeom, atmosphereMaterial);
-
-    atmosphereMesh.rotation.z = 0.41;
-    atmosphereMesh.castShadow = true;
-    atmosphereMesh.receiveShadow = true;
-
-    planet.add(atmosphereMesh);
+    atmosphere.rotation.z = 0.41;
+    planet.add(atmosphere);
   }
 
   if (moons) {
-    moons.forEach((moon) => {
-      const moonMaterial = moon.bump
-        ? new MeshStandardMaterial({
-            map: textureLoader.load(moon.texture),
-            bumpMap: textureLoader.load(moon.bump),
-            bumpScale: 0.5,
-          })
-        : new MeshStandardMaterial({
-            map: textureLoader.load(moon.texture),
-          });
-      const moonGeometry = new SphereGeometry(moon.size, 32, 20);
-      const moonMesh = new Mesh(moonGeometry, moonMaterial);
-      const moonOrbitDistance = radiusKm * 1.5;
+    moons.forEach(async (moon) => {
+      moon.mesh.position.set(moon.orbitRadiusInKm, 0, 0);
+      moon.mesh.castShadow = true;
+      moon.mesh.receiveShadow = true;
 
-      moonMesh.position.set(moonOrbitDistance, 0, 0);
-      moonMesh.castShadow = true;
-      moonMesh.receiveShadow = true;
-
-      planetSystem.add(moonMesh);
-      moon.mesh = moonMesh;
+      planetSystem.add(moon.mesh);
     });
   }
+
   group.add(planetSystem);
 
+  const animate = () => {
+    // todo
+  };
+
   return {
-    name,
     planet,
     group,
-    atmosphereMesh,
-    moons,
     planetSystem,
-    ringMesh,
+
+    moons,
+    atmosphere,
+    ring,
   };
 };

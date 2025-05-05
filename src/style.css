@@ -46,6 +46,7 @@ p {
 }
 
 #cockpit {
+  background: black;
   padding: 1rem;
   color: white;
   position: absolute;
