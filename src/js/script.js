@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { makeCockpit } from "./cockpit";
+import { loadAsteroids } from "./planets/asteroids";
 import { makePlanet } from "./planets/planet";
 import { makeSun } from "./planets/sun";
 import { applyPostProcessing } from "./postprocessing";
@@ -59,6 +60,7 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled = true;
 
 const textureLoader = new THREE.TextureLoader();
 
@@ -139,45 +141,23 @@ function loadObject(path, position, scale, callback) {
 }
 
 // ******  ASTEROIDS  ******
-const asteroids = [];
-function loadAsteroids(
-  path,
-  numberOfAsteroids,
-  minOrbitRadius,
-  maxOrbitRadius
-) {
-  const loader = new GLTFLoader();
-  loader.load(
-    path,
-    function (gltf) {
-      gltf.scene.traverse(function (child) {
-        if (child.isMesh) {
-          for (let i = 0; i < numberOfAsteroids / 12; i++) {
-            // Divide by 12 because there are 12 asteroids in the pack
-            const asteroid = child.clone();
-            const orbitRadius = THREE.MathUtils.randFloat(
-              minOrbitRadius,
-              maxOrbitRadius
-            );
-            const angle = Math.random() * Math.PI * 2;
-            const x = orbitRadius * Math.cos(angle);
-            const y = 0;
-            const z = orbitRadius * Math.sin(angle);
-            child.receiveShadow = true;
-            asteroid.position.set(x, y, z);
-            asteroid.scale.setScalar(THREE.MathUtils.randFloat(0.8, 1.2));
-            scene.add(asteroid);
-            asteroids.push(asteroid);
-          }
-        }
-      });
-    },
-    undefined,
-    function (error) {
-      console.error("An error happened", error);
-    }
-  );
-}
+const asteroidsGroup = new THREE.Group();
+scene.add(asteroidsGroup);
+const onAsteroid = (asteroid) => {
+  asteroidsGroup.add(asteroid);
+};
+loadAsteroids({
+  asteroidsCount: 1000,
+  minOrbitRadius: 130,
+  maxOrbitRadius: 160,
+  onAsteroid,
+});
+loadAsteroids({
+  asteroidsCount: 3000,
+  minOrbitRadius: 352,
+  maxOrbitRadius: 370,
+  onAsteroid,
+});
 
 // Earth day/night effect shader material
 const earthMaterial = new THREE.ShaderMaterial({
@@ -541,15 +521,7 @@ function animate() {
   }
 
   // Rotate asteroids
-  asteroids.forEach((asteroid) => {
-    asteroid.rotation.y += 0.0001;
-    asteroid.position.x =
-      asteroid.position.x * Math.cos(0.0001 * settings.accelerationOrbit) +
-      asteroid.position.z * Math.sin(0.0001 * settings.accelerationOrbit);
-    asteroid.position.z =
-      asteroid.position.z * Math.cos(0.0001 * settings.accelerationOrbit) -
-      asteroid.position.x * Math.sin(0.0001 * settings.accelerationOrbit);
-  });
+  asteroidsGroup.rotation.y += 0.0001 * settings.accelerationOrbit;
 
   // ****** OUTLINES ON PLANETS ******
   raycaster.setFromCamera(mouse, camera);
@@ -577,8 +549,6 @@ function animate() {
   requestAnimationFrame(animate);
   composer.render();
 }
-loadAsteroids("/asteroids/asteroidPack.glb", 1000, 130, 160);
-loadAsteroids("/asteroids/asteroidPack.glb", 3000, 352, 370);
 animate();
 
 window.addEventListener("mousemove", onMouseMove, false);
