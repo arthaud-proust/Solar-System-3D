@@ -55,7 +55,6 @@ const keyboardControls: Controls = () => {
 export const makeShip = ({ camera }: { camera: Camera }) => {
   // Vaisseau (simple cube)
   const group = new Object3D();
-  group.position.copy(camera.position);
   const geometry = new BoxGeometry(1, 0.5, 2);
   const material = new MeshBasicMaterial({
     color: 0x00ffcc,
@@ -102,13 +101,21 @@ export const makeShip = ({ camera }: { camera: Camera }) => {
     direction.applyQuaternion(group.quaternion);
     group.quaternion.multiply(quaternion);
     group.position.addScaledVector(direction, speed);
-    camera.position.copy(group.position);
+
+    const cameraOffset = new Vector3(0, 0.2, -0.5); // derrière le nez du vaisseau
+    const worldCameraPos = cameraOffset
+      .clone()
+      .applyQuaternion(group.quaternion)
+      .add(group.position);
+
+    camera.position.copy(worldCameraPos);
     camera.quaternion.copy(group.quaternion);
   };
 
   return {
     update,
     speed: () => speed,
+    position: () => group.position,
     group,
   };
 };

@@ -29,8 +29,6 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1_000_000_000
 );
-camera.position.set(1_000_000, 0, 0);
-camera.rotation.set(0, 0, 0);
 
 const ship = makeShip({
   camera,
@@ -172,6 +170,8 @@ const raycastTargets = [
   pluto.planet,
 ];
 
+ship.group.position.set(100_000_000, 100_000, 0);
+
 let lastTime = performance.now();
 function animate() {
   const currentTime = performance.now();
@@ -181,6 +181,7 @@ function animate() {
   ship.update(delta);
 
   cockpit.updateSpeed(ship.speed());
+  cockpit.updatePosition(ship.position());
 
   //rotating planets around the sun and itself
   sun.rotateY(0.001 * settings.acceleration);
