@@ -16,13 +16,7 @@ export const makeMars = async ({
   revolutionInEarthDays,
   tiltInDegree,
   moons,
-
-  settings,
-}: PlanetData & {
-  settings: {
-    accelerationOrbit: number;
-  };
-}) => {
+}: PlanetData) => {
   const moonsModels = {
     phobos: "/images/mars/phobos.glb",
     deimos: "/images/mars/deimos.glb",
@@ -46,32 +40,13 @@ export const makeMars = async ({
     moons: await Promise.all(
       moons.map(async (moon) => ({
         ...moon,
-        mesh: await starMeshFromObj(moonsModels[moon.name]),
+        mesh: await starMeshFromObj({
+          path: moonsModels[moon.name],
+          radiusInKm: moon.radiusInKm,
+        }),
       }))
     ),
   });
-
-  // const animate = () => {
-  //   mars.planet.rotateY(0.01 * settings.acceleration);
-  //   mars.group.rotateY(0.0007 * settings.accelerationOrbit);
-
-  //   moons.forEach((moon) => {
-  //     if (moon.mesh) {
-  //       const time = performance.now();
-
-  //       const moonX =
-  //         mars.planet.position.x +
-  //         moon.orbitRadius * Math.cos(time * moon.orbitSpeed);
-  //       const moonY = moon.orbitRadius * Math.sin(time * moon.orbitSpeed);
-  //       const moonZ =
-  //         mars.planet.position.z +
-  //         moon.orbitRadius * Math.sin(time * moon.orbitSpeed);
-
-  //       moon.mesh.position.set(moonX, moonY, moonZ);
-  //       moon.mesh.rotateY(0.001);
-  //     }
-  //   });
-  // };
 
   return { ...mars, moons };
 };

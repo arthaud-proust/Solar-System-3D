@@ -58,7 +58,7 @@ export const planetsRealScale = {
   },
   earth: {
     name: "earth",
-    orbitRadiusInKm: 150 * MILLON,
+    orbitRadiusInKm: 149.6 * MILLON,
     orbitRevolutionInEarthDays: 365,
     radiusInKm: 6_371,
     revolutionInEarthDays: 1,
@@ -223,9 +223,9 @@ export const planetsSmallScale = {
     moons: [
       {
         name: "moon",
-        orbitRadiusInKm: 1.6,
+        orbitRadiusInKm: 10,
         orbitRevolutionInEarthDays: 27,
-        radiusInKm: 10,
+        radiusInKm: 1.6,
       },
     ],
     info: "Third planet from the Sun and the only known planet to harbor life.",
@@ -342,3 +342,28 @@ export const planetsSmallScale = {
     info: "Originally classified as the ninth planet, Pluto is now considered a dwarf planet.",
   },
 } satisfies Record<string, PlanetData>;
+
+Object.keys(planetsRealScale).forEach((key) => {
+  const real = planetsRealScale[
+    key
+  ] as (typeof planetsRealScale)[keyof typeof planetsRealScale];
+
+  const small = planetsSmallScale[
+    key
+  ] as (typeof planetsSmallScale)[keyof typeof planetsSmallScale];
+
+  small.orbitRevolutionInEarthDays =
+    (real.orbitRevolutionInEarthDays * small.orbitRadiusInKm) /
+    real.orbitRadiusInKm;
+
+  small.revolutionInEarthDays =
+    (real.revolutionInEarthDays * small.radiusInKm) / real.radiusInKm;
+
+  small.moons?.forEach((smallMoon, index) => {
+    const realMoon = real.moons[index];
+
+    smallMoon.orbitRevolutionInEarthDays =
+      (realMoon.orbitRevolutionInEarthDays * smallMoon.orbitRadiusInKm) /
+      realMoon.orbitRadiusInKm;
+  });
+});

@@ -55,8 +55,9 @@ export const makeCockpit = () => {
     labelEl.style.left = `${label.x}px`;
     labelEl.style.top = `${label.y}px`;
     labelEl.querySelector(".distance").innerText = `${round(
-      label.distance
-    )} km`;
+      label.distance,
+      0
+    ).toLocaleString()} km`;
   };
 
   return {

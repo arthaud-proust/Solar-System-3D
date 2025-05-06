@@ -38,5 +38,9 @@ export const makeSun = ({
 
   group.add(pointLight);
 
-  return group;
+  const animate = (delta: number) => {
+    sun.rotateY(0.01 * delta);
+  };
+
+  return { group, animate };
 };

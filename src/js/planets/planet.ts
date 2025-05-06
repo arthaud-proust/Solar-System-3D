@@ -87,8 +87,37 @@ export const makePlanet = ({
 
   group.add(planetSystem);
 
-  const animate = () => {
-    // todo
+  const DAY_IN_S = 60 * 60 * 24;
+  const FULL_ANGLE = 2 * Math.PI;
+  const animate = (deltaInS: number) => {
+    if (deltaInS == 0) return;
+
+    const rotationPerS = FULL_ANGLE / DAY_IN_S / revolutionInEarthDays;
+    planet.rotateY(rotationPerS * deltaInS);
+
+    const orbitRotationPerS =
+      FULL_ANGLE / DAY_IN_S / orbitRevolutionInEarthDays;
+    planetSystem.rotateY(orbitRotationPerS * deltaInS);
+
+    if (moons) {
+      moons.forEach((moon) => {
+        const orbitRotationPerS =
+          FULL_ANGLE / DAY_IN_S / moon.orbitRevolutionInEarthDays;
+
+        const moonX =
+          planet.position.x +
+          moon.orbitRadiusInKm * Math.cos(orbitRotationPerS * deltaInS);
+        const moonY =
+          moon.orbitRadiusInKm * Math.sin(orbitRotationPerS * deltaInS);
+        const moonZ =
+          planet.position.z +
+          moon.orbitRadiusInKm * Math.sin(orbitRotationPerS * deltaInS);
+
+        moon.mesh.position.set(moonX, moonY, moonZ);
+
+        moon.mesh.rotateY(0.01);
+      });
+    }
   };
 
   return {
@@ -100,5 +129,7 @@ export const makePlanet = ({
     moons,
     atmosphere,
     ring,
+
+    animate,
   };
 };

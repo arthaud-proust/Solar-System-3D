@@ -33,7 +33,7 @@ export const starMeshFromMaterial = (star: {
   radiusInKm: number;
 }) => {
   const mesh = new Mesh(
-    new SphereGeometry(star.radiusInKm, 32, 20),
+    new SphereGeometry(star.radiusInKm, 320, 200),
     star.material
   );
 
@@ -43,17 +43,18 @@ export const starMeshFromMaterial = (star: {
   return mesh;
 };
 
-export const starMeshFromObj = async (path: string) => {
-  const { scene } = await new GLTFLoader().loadAsync(path);
+export const starMeshFromObj = async (star: {
+  path: string;
+  radiusInKm: number;
+}) => {
+  const { scene } = await new GLTFLoader().loadAsync(star.path);
 
-  const mesh = scene as unknown as Mesh;
+  const mesh = scene.children[0] as unknown as Mesh;
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
 
-  mesh.traverse(function (child) {
-    if ("isMesh" in child && child.isMesh) {
-      child.castShadow = true;
-      child.receiveShadow = true;
-    }
-  });
+  const radius = mesh.geometry.boundingSphere!.radius;
+  mesh.scale.setScalar(star.radiusInKm / radius);
 
   return mesh;
 };

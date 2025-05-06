@@ -78,7 +78,7 @@ export const makeShip = ({
 
   const controls = keyboardControls();
 
-  const update = (delta: number) => {
+  const update = (deltaInS: number) => {
     const moves = controls.current();
 
     const potentialSpeed = moves.lightSpeed ? lightSpeedKmh : normalSpeedKmh;
@@ -93,7 +93,7 @@ export const makeShip = ({
 
     const euler = new Euler(0, 0, 0, "YXZ");
 
-    const rotationSpeed = baseRotationSpeed * delta;
+    const rotationSpeed = baseRotationSpeed * deltaInS;
     if (moves.pitchDown) euler.x -= rotationSpeed;
     if (moves.pitchUp) euler.x += rotationSpeed;
     if (moves.yawLeft) euler.y += rotationSpeed;
@@ -106,7 +106,7 @@ export const makeShip = ({
     const direction = new Vector3(0, 0, -1);
     direction.applyQuaternion(group.quaternion);
     group.quaternion.multiply(quaternion);
-    group.position.addScaledVector(direction, speed);
+    group.position.addScaledVector(direction, speed * deltaInS);
 
     const cameraOffset = new Vector3(0, 0.2, -0.5); // derrière le nez du vaisseau
     const worldCameraPos = cameraOffset

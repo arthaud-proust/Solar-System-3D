@@ -22,12 +22,8 @@ export const makeEarth = ({
   moons,
 
   sunPosition,
-  settings,
 }: PlanetData & {
   sunPosition: Vector3;
-  settings: {
-    accelerationOrbit: number;
-  };
 }) => {
   const textureLoader = new TextureLoader();
   // Earth day/night effect shader material
@@ -92,7 +88,7 @@ export const makeEarth = ({
           texture: earthMoonTexture,
           bump: earthMoonBump,
         }),
-        radiusInKm,
+        radiusInKm: moon.radiusInKm,
       }),
     })),
   });
