@@ -9,7 +9,7 @@ import { makeSun } from "./planets/sun";
 import { applyPostProcessing } from "./postprocessing";
 import { makeShip } from "./ship";
 
-import { planets } from "./planets";
+import { planetsSmallScale } from "./planets";
 import { makeJupiter } from "./planets/jupiter";
 import { makeMars } from "./planets/mars";
 import { makeMercury } from "./planets/mercury";
@@ -19,6 +19,7 @@ import { makeSaturn } from "./planets/saturn";
 import { makeUranus } from "./planets/uranus";
 import { makeVenus } from "./planets/venus";
 
+const planets = planetsSmallScale;
 const cockpit = makeCockpit();
 
 // ******  SETUP  ******
@@ -32,7 +33,11 @@ const camera = new THREE.PerspectiveCamera(
 
 const ship = makeShip({
   camera,
+  normalSpeedKmh: 1,
 });
+ship.group.position.set(0, 100, 300);
+// ship.group.position.set(100_000_000, 100_000, 0);
+
 scene.add(ship.group);
 
 const renderer = new THREE.WebGLRenderer();
@@ -155,6 +160,19 @@ const pluto = makePluto({
 });
 scene.add(pluto.group);
 
+const planetsOnScene = [
+  mercury,
+  venus,
+  venus,
+  earth,
+  mars,
+  jupiter,
+  saturn,
+  uranus,
+  neptune,
+  pluto,
+];
+
 // Array of planets and atmospheres for raycasting
 const raycastTargets = [
   mercury.planet,
@@ -170,8 +188,6 @@ const raycastTargets = [
   pluto.planet,
 ];
 
-ship.group.position.set(100_000_000, 100_000, 0);
-
 let lastTime = performance.now();
 function animate() {
   const currentTime = performance.now();
@@ -183,27 +199,49 @@ function animate() {
   cockpit.updateSpeed(ship.speed());
   cockpit.updatePosition(ship.position());
 
-  //rotating planets around the sun and itself
-  sun.rotateY(0.001 * settings.acceleration);
-  mercury.planet.rotateY(0.001 * settings.acceleration);
-  mercury.group.rotateY(0.004 * settings.accelerationOrbit);
-  venus.planet.rotateY(0.0005 * settings.acceleration);
-  venus.atmosphere?.rotateY(0.0005 * settings.acceleration);
-  venus.group.rotateY(0.0006 * settings.accelerationOrbit);
-  earth.planet.rotateY(0.005 * settings.acceleration);
-  earth.atmosphere?.rotateY(0.001 * settings.acceleration);
-  earth.group.rotateY(0.001 * settings.accelerationOrbit);
+  planetsOnScene.forEach((planetInstance) => {
+    const screenPos = planetInstance.planet.position.clone();
+    const distance = camera.position.distanceTo(screenPos);
 
-  jupiter.planet.rotateY(0.005 * settings.acceleration);
-  jupiter.group.rotateY(0.0003 * settings.accelerationOrbit);
-  saturn.planet.rotateY(0.01 * settings.acceleration);
-  saturn.group.rotateY(0.0002 * settings.accelerationOrbit);
-  uranus.planet.rotateY(0.005 * settings.acceleration);
-  uranus.group.rotateY(0.0001 * settings.accelerationOrbit);
-  neptune.planet.rotateY(0.005 * settings.acceleration);
-  neptune.group.rotateY(0.00008 * settings.accelerationOrbit);
-  pluto.planet.rotateY(0.001 * settings.acceleration);
-  pluto.group.rotateY(0.00006 * settings.accelerationOrbit);
+    screenPos.project(camera);
+
+    // 4. Test
+    const visible = screenPos.z < 1;
+
+    // Convertit en pixels écran
+    const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+    const y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+
+    cockpit.updateLabel({
+      id: planetInstance.name,
+      x,
+      y,
+      distance,
+      visible,
+    });
+  });
+
+  // //rotating planets around the sun and itself
+  // sun.rotateY(0.001 * settings.acceleration);
+  // mercury.planet.rotateY(0.001 * settings.acceleration);
+  // mercury.group.rotateY(0.004 * settings.accelerationOrbit);
+  // venus.planet.rotateY(0.0005 * settings.acceleration);
+  // venus.atmosphere?.rotateY(0.0005 * settings.acceleration);
+  // venus.group.rotateY(0.0006 * settings.accelerationOrbit);
+  // earth.planet.rotateY(0.005 * settings.acceleration);
+  // earth.atmosphere?.rotateY(0.001 * settings.acceleration);
+  // earth.group.rotateY(0.001 * settings.accelerationOrbit);
+
+  // jupiter.planet.rotateY(0.005 * settings.acceleration);
+  // jupiter.group.rotateY(0.0003 * settings.accelerationOrbit);
+  // saturn.planet.rotateY(0.01 * settings.acceleration);
+  // saturn.group.rotateY(0.0002 * settings.accelerationOrbit);
+  // uranus.planet.rotateY(0.005 * settings.acceleration);
+  // uranus.group.rotateY(0.0001 * settings.accelerationOrbit);
+  // neptune.planet.rotateY(0.005 * settings.acceleration);
+  // neptune.group.rotateY(0.00008 * settings.accelerationOrbit);
+  // pluto.planet.rotateY(0.001 * settings.acceleration);
+  // pluto.group.rotateY(0.00006 * settings.accelerationOrbit);
 
   // Animate Earth's moon
   // if (earth.moons) {

@@ -92,6 +92,7 @@ export const makePlanet = ({
   };
 
   return {
+    name,
     planet,
     group,
     planetSystem,

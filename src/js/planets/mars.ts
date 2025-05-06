@@ -24,8 +24,8 @@ export const makeMars = async ({
   };
 }) => {
   const moonsModels = {
-    Phobos: "/images/mars/phobos.glb",
-    Deimos: "/images/mars/deimos.glb",
+    phobos: "/images/mars/phobos.glb",
+    deimos: "/images/mars/deimos.glb",
   };
 
   const mars = makePlanet({

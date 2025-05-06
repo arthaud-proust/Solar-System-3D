@@ -11,6 +11,26 @@ export const makeCockpit = () => {
     z: cockpitEl.querySelector(".position-z") as HTMLElement,
   };
 
+  const labelEls = {
+    sun: cockpitEl.querySelector(".sun") as HTMLElement,
+    mercury: cockpitEl.querySelector(".mercury") as HTMLElement,
+    venus: cockpitEl.querySelector(".venus") as HTMLElement,
+    earth: cockpitEl.querySelector(".earth") as HTMLElement,
+    moon: cockpitEl.querySelector(".moon") as HTMLElement,
+    mars: cockpitEl.querySelector(".mars") as HTMLElement,
+    phobos: cockpitEl.querySelector(".phobos") as HTMLElement,
+    deimos: cockpitEl.querySelector(".deimos") as HTMLElement,
+    jupiter: cockpitEl.querySelector(".jupiter") as HTMLElement,
+    ganymede: cockpitEl.querySelector(".ganymede") as HTMLElement,
+    callisto: cockpitEl.querySelector(".callisto") as HTMLElement,
+    europa: cockpitEl.querySelector(".europa") as HTMLElement,
+    io: cockpitEl.querySelector(".io") as HTMLElement,
+    saturn: cockpitEl.querySelector(".saturn") as HTMLElement,
+    uranus: cockpitEl.querySelector(".uranus") as HTMLElement,
+    neptune: cockpitEl.querySelector(".neptune") as HTMLElement,
+    pluto: cockpitEl.querySelector(".pluto") as HTMLElement,
+  };
+
   const updateSpeed = (speed: number) =>
     (speedEl.innerText = round(speed).toString());
 
@@ -20,8 +40,28 @@ export const makeCockpit = () => {
     positionsEl.z.innerText = round(position.z, 0).toString();
   };
 
+  const updateLabel = (label: {
+    id: string;
+    x: number;
+    y: number;
+    distance: number;
+    visible: boolean;
+  }) => {
+    const labelEl = labelEls[label.id];
+    if (!labelEl) return;
+
+    labelEl.style.display = label.visible ? "flex" : "none";
+
+    labelEl.style.left = `${label.x}px`;
+    labelEl.style.top = `${label.y}px`;
+    labelEl.querySelector(".distance").innerText = `${round(
+      label.distance
+    )} km`;
+  };
+
   return {
     updateSpeed,
     updatePosition,
+    updateLabel,
   };
 };

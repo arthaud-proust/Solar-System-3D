@@ -52,7 +52,13 @@ const keyboardControls: Controls = () => {
   };
 };
 
-export const makeShip = ({ camera }: { camera: Camera }) => {
+export const makeShip = ({
+  camera,
+  normalSpeedKmh,
+}: {
+  camera: Camera;
+  normalSpeedKmh?: number;
+}) => {
   // Vaisseau (simple cube)
   const group = new Object3D();
   const geometry = new BoxGeometry(1, 0.5, 2);
@@ -65,7 +71,7 @@ export const makeShip = ({ camera }: { camera: Camera }) => {
 
   // Vitesse et contrôles
   let speed = 0;
-  const normalSpeedKmh = 1000;
+  normalSpeedKmh ||= 1000;
   const lightSpeedKmh = 299_792.46;
 
   const baseRotationSpeed = 1;

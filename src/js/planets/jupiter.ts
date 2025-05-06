@@ -17,10 +17,10 @@ export const makeJupiter = ({
   moons,
 }: PlanetData) => {
   const moonTextures = {
-    Io: ioTexture as string,
-    Europa: europaTexture as string,
-    Ganymede: ganymedeTexture as string,
-    Callisto: callistoTexture as string,
+    io: ioTexture as string,
+    europa: europaTexture as string,
+    ganymede: ganymedeTexture as string,
+    callisto: callistoTexture as string,
   };
 
   const planet = makePlanet({
