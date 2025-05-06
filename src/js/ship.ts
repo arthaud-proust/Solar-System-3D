@@ -17,8 +17,9 @@ type Controls = () => {
     yawRight: boolean;
     pitchUp: boolean;
     pitchDown: boolean;
-    speedUp: boolean;
-    speedDown: boolean;
+    lightSpeed: boolean;
+    forward: boolean;
+    backward: boolean;
   };
 };
 
@@ -41,8 +42,9 @@ const keyboardControls: Controls = () => {
     yawRight: keys["d"],
     pitchUp: keys["s"],
     pitchDown: keys["z"],
-    speedUp: keys["arrowup"],
-    speedDown: keys["arrowdown"],
+    lightSpeed: keys["shift"],
+    forward: keys["arrowup"],
+    backward: keys["arrowdown"],
   });
 
   return {
@@ -64,8 +66,9 @@ export const makeShip = ({ camera }: { camera: Camera }) => {
 
   // Vitesse et contrôles
   let speed = 0;
-  const maxSpeed = 10000;
-  const acceleration = maxSpeed / 10;
+  const normalSpeedKmh = 1000;
+  const lightSpeedKmh = 299_792.46;
+
   const baseRotationSpeed = 1;
 
   const controls = keyboardControls();
@@ -73,9 +76,15 @@ export const makeShip = ({ camera }: { camera: Camera }) => {
   const update = (delta: number) => {
     const moves = controls.current();
 
+    const potentialSpeed = moves.lightSpeed ? lightSpeedKmh : normalSpeedKmh;
     // Gestion de la vitesse
-    if (moves.speedUp) speed = Math.min(maxSpeed, speed + acceleration);
-    if (moves.speedDown) speed = Math.max(-maxSpeed, speed - acceleration);
+    if (moves.forward) {
+      speed = potentialSpeed;
+    } else if (moves.backward) {
+      speed = -potentialSpeed;
+    } else {
+      speed = 0;
+    }
 
     const euler = new Euler(0, 0, 0, "YXZ");
 
