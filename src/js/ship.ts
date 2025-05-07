@@ -18,6 +18,7 @@ type Controls = () => {
     pitchUp: boolean;
     pitchDown: boolean;
     lightSpeed: boolean;
+    supraLightSpeed: boolean;
     forward: boolean;
     backward: boolean;
   };
@@ -43,6 +44,7 @@ const keyboardControls: Controls = () => {
     pitchUp: keys["s"],
     pitchDown: keys["z"],
     lightSpeed: keys["shift"],
+    supraLightSpeed: keys[" "],
     forward: keys["arrowup"],
     backward: keys["arrowdown"],
   });
@@ -73,6 +75,7 @@ export const makeShip = ({
   let speed = 0;
   normalSpeedKmh ||= 1000;
   const lightSpeedKmh = 299_792.46;
+  const supraLightSpeedKmh = 50_000_000;
 
   const baseRotationSpeed = 1;
 
@@ -81,7 +84,12 @@ export const makeShip = ({
   const update = (deltaInS: number) => {
     const moves = controls.current();
 
-    const potentialSpeed = moves.lightSpeed ? lightSpeedKmh : normalSpeedKmh;
+    const potentialSpeed = moves.supraLightSpeed
+      ? supraLightSpeedKmh
+      : moves.lightSpeed
+      ? lightSpeedKmh
+      : normalSpeedKmh;
+
     // Gestion de la vitesse
     if (moves.forward) {
       speed = potentialSpeed;
