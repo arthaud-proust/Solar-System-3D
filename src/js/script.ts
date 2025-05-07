@@ -66,7 +66,7 @@ customContainer.appendChild(gui.domElement);
 const settings = {
   acceleration: 1,
 };
-gui.add(settings, "acceleration", 0.001, 100);
+gui.add(settings, "acceleration", 1, 100_000);
 
 // mouse movement
 const raycaster = new THREE.Raycaster();
@@ -189,6 +189,33 @@ const raycastTargets = [
 
 const worldPos = new THREE.Vector3();
 const clock = new THREE.Clock();
+
+function updateLabelForStart(star: { name: string; mesh: THREE.Mesh }) {
+  const planetPosInWorld = star.mesh.getWorldPosition(worldPos);
+  const distance = camera.position.distanceTo(planetPosInWorld);
+
+  const planetPosOnScreen = planetPosInWorld.clone().project(camera);
+  const x = (planetPosOnScreen.x * 0.5 + 0.5) * window.innerWidth;
+  const y = (-planetPosOnScreen.y * 0.5 + 0.5) * window.innerHeight;
+
+  const cameraDirection = new THREE.Vector3();
+  camera.getWorldDirection(cameraDirection);
+
+  const cameraToPlanet = new THREE.Vector3()
+    .subVectors(planetPosInWorld, camera.position)
+    .normalize();
+
+  const visible = cameraDirection.dot(cameraToPlanet) > 0;
+
+  cockpit.updateLabel({
+    id: star.name,
+    x,
+    y,
+    distance,
+    visible: visible,
+  });
+}
+
 function animate() {
   const deltaInS = clock.getDelta();
 
@@ -198,28 +225,16 @@ function animate() {
   cockpit.updatePosition(ship.position());
 
   planetsOnScene.forEach((planetInstance) => {
-    const planetPosInWorld = planetInstance.planet.getWorldPosition(worldPos);
-    const distance = camera.position.distanceTo(planetPosInWorld);
+    updateLabelForStart({
+      name: planetInstance.name,
+      mesh: planetInstance.planet,
+    });
 
-    const planetPosOnScreen = planetPosInWorld.clone().project(camera);
-    const x = (planetPosOnScreen.x * 0.5 + 0.5) * window.innerWidth;
-    const y = (-planetPosOnScreen.y * 0.5 + 0.5) * window.innerHeight;
-
-    const cameraDirection = new THREE.Vector3();
-    camera.getWorldDirection(cameraDirection);
-
-    const cameraToPlanet = new THREE.Vector3()
-      .subVectors(planetPosInWorld, camera.position)
-      .normalize();
-
-    const visible = cameraDirection.dot(cameraToPlanet) > 0;
-
-    cockpit.updateLabel({
-      id: planetInstance.name,
-      x,
-      y,
-      distance,
-      visible: visible,
+    planetInstance.moons?.forEach((moon) => {
+      updateLabelForStart({
+        name: moon.name,
+        mesh: moon.mesh,
+      });
     });
   });
 

@@ -48,5 +48,5 @@ export const makeMars = async ({
     ),
   });
 
-  return { ...mars, moons };
+  return { ...mars };
 };

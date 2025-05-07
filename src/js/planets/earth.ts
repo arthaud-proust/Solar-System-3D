@@ -81,16 +81,22 @@ export const makeEarth = ({
       radiusInKm,
       texture: earthAtmosphere,
     }),
-    moons: moons.map((moon) => ({
-      ...moon,
-      mesh: starMeshFromMaterial({
+    moons: moons.map((moon) => {
+      const mesh = starMeshFromMaterial({
         material: starMaterialFromTextureAndBump({
           texture: earthMoonTexture,
           bump: earthMoonBump,
         }),
         radiusInKm: moon.radiusInKm,
-      }),
-    })),
+      });
+
+      mesh.rotateY(Math.PI);
+
+      return {
+        ...moon,
+        mesh,
+      };
+    }),
   });
 
   return earth;

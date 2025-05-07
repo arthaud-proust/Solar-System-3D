@@ -48,5 +48,5 @@ export const makeJupiter = ({
     })),
   });
 
-  return { ...planet, moons };
+  return { ...planet };
 };

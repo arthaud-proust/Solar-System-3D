@@ -6,6 +6,7 @@ import {
   LineLoop,
   Mesh,
   Object3D,
+  type Object3DEventMap,
 } from "three";
 import type { MoonData, PlanetData } from "../planets";
 
@@ -33,6 +34,7 @@ export const makePlanet = ({
 }) => {
   const group = new Object3D();
   const planetSystem = new Group();
+  const moonSystems: Array<Group<Object3DEventMap>> = [];
 
   planet.position.x = orbitRadiusInKm;
   planet.rotation.z = (tiltInDegree * Math.PI) / 180;
@@ -77,11 +79,17 @@ export const makePlanet = ({
 
   if (moons) {
     moons.forEach(async (moon) => {
+      const moonSystem = new Group();
+      moonSystems.push(moonSystem);
+      moonSystem.position.copy(planet.position);
+
       moon.mesh.position.set(moon.orbitRadiusInKm, 0, 0);
       moon.mesh.castShadow = true;
       moon.mesh.receiveShadow = true;
 
-      planetSystem.add(moon.mesh);
+      moonSystem.add(moon.mesh);
+
+      planetSystem.add(moonSystem);
     });
   }
 
@@ -100,22 +108,13 @@ export const makePlanet = ({
     planetSystem.rotateY(orbitRotationPerS * deltaInS);
 
     if (moons) {
-      moons.forEach((moon) => {
+      moons.forEach((moon, index) => {
         const orbitRotationPerS =
           FULL_ANGLE / DAY_IN_S / moon.orbitRevolutionInEarthDays;
 
-        const moonX =
-          planet.position.x +
-          moon.orbitRadiusInKm * Math.cos(orbitRotationPerS * deltaInS);
-        const moonY =
-          moon.orbitRadiusInKm * Math.sin(orbitRotationPerS * deltaInS);
-        const moonZ =
-          planet.position.z +
-          moon.orbitRadiusInKm * Math.sin(orbitRotationPerS * deltaInS);
+        moonSystems[index].rotateY(orbitRotationPerS * deltaInS);
 
-        moon.mesh.position.set(moonX, moonY, moonZ);
-
-        moon.mesh.rotateY(0.01);
+        moon.mesh.rotateY(-orbitRotationPerS * deltaInS);
       });
     }
   };
