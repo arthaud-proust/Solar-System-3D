@@ -4,7 +4,7 @@ export const atmosphereMesh = (atmosphere: {
   radiusInKm: number;
   texture: string;
 }) => {
-  const geometry = new SphereGeometry(atmosphere.radiusInKm + 0.1, 32, 20);
+  const geometry = new SphereGeometry(atmosphere.radiusInKm * 1.01, 32, 20);
 
   const material = new MeshPhongMaterial({
     map: new TextureLoader().load(atmosphere.texture),

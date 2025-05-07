@@ -38,9 +38,7 @@ const ship = makeShip({
 
 ship.positionTo({ x: 100_000_000, y: 100_000_000, z: 0 });
 
-const renderer = new THREE.WebGLRenderer({
-  logarithmicDepthBuffer: true,
-});
+const renderer = new THREE.WebGLRenderer({});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
@@ -64,7 +62,7 @@ customContainer.appendChild(gui.domElement);
 
 // ****** SETTINGS FOR INTERACTIVE CONTROLS  ******
 const settings = {
-  acceleration: 0,
+  acceleration: 1,
 };
 gui.add(settings, "acceleration", 0.001, 100);
 

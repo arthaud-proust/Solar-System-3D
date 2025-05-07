@@ -29,11 +29,11 @@ export const makeSun = ({
   group.add(sun);
 
   //point light in the sun
-  const pointLight = new PointLight(0xfdffd3, 1200, 400, 1.4);
+  const pointLight = new PointLight(0xfdffd3, 5, 10_000_000_000, 0);
   pointLight.shadow.mapSize.width = 1024;
   pointLight.shadow.mapSize.height = 1024;
   pointLight.shadow.camera.near = 10;
-  pointLight.shadow.camera.far = 20;
+  pointLight.shadow.camera.far = 10_000_000_000;
   pointLight.castShadow = true;
 
   group.add(pointLight);
