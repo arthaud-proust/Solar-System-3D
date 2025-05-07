@@ -1,4 +1,5 @@
 const MILLON = 1_000_000;
+const BILLON = 1_000 * MILLON;
 
 export type MoonData = {
   name: string;
@@ -134,7 +135,7 @@ export const planetsRealScale = {
   },
   saturn: {
     name: "saturn",
-    orbitRadiusInKm: 1.4 * MILLON,
+    orbitRadiusInKm: 1.4 * BILLON,
     orbitRevolutionInEarthDays: 10_767.5,
     radiusInKm: 58_232,
     revolutionInEarthDays: 0.45,
@@ -149,7 +150,7 @@ export const planetsRealScale = {
   },
   uranus: {
     name: "uranus",
-    orbitRadiusInKm: 2.9 * MILLON,
+    orbitRadiusInKm: 2.9 * BILLON,
     orbitRevolutionInEarthDays: 30_660,
     radiusInKm: 25_362,
     revolutionInEarthDays: 0.72,
@@ -160,7 +161,7 @@ export const planetsRealScale = {
   },
   neptune: {
     name: "neptune",
-    orbitRadiusInKm: 4.5 * MILLON,
+    orbitRadiusInKm: 4.5 * BILLON,
     orbitRevolutionInEarthDays: 60_225,
     radiusInKm: 24_622,
     revolutionInEarthDays: 0.67,
@@ -171,7 +172,7 @@ export const planetsRealScale = {
   },
   pluto: {
     name: "pluto",
-    orbitRadiusInKm: 5.9 * MILLON,
+    orbitRadiusInKm: 5.9 * BILLON,
     orbitRevolutionInEarthDays: 90_520,
     radiusInKm: 1_188.3,
     revolutionInEarthDays: 6.4,
