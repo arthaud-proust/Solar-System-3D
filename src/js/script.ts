@@ -9,6 +9,7 @@ import { makeSun } from "./planets/sun";
 import { applyPostProcessing } from "./postprocessing";
 import { makeShip } from "./ship";
 
+import { KeyboardControls } from "./controls";
 import { planetsRealScale } from "./planets";
 import { makeJupiter } from "./planets/jupiter";
 import { makeMars } from "./planets/mars";
@@ -34,6 +35,7 @@ const camera = new THREE.PerspectiveCamera(
 const ship = makeShip({
   camera,
   normalSpeedKmh: 1000,
+  controls: new KeyboardControls(),
 });
 
 ship.positionTo({ x: 100_000_000, y: 100_000_000, z: 0 });
