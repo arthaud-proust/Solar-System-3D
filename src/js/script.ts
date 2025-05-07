@@ -27,7 +27,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
-  0.1,
+  1,
   1_000_000_000
 );
 
@@ -36,9 +36,7 @@ const ship = makeShip({
   normalSpeedKmh: 1000,
 });
 
-ship.group.position.set(100_000_000, 100_000_000, 0);
-
-scene.add(ship.group);
+ship.positionTo({ x: 100_000_000, y: 100_000_000, z: 0 });
 
 const renderer = new THREE.WebGLRenderer({
   logarithmicDepthBuffer: true,
@@ -66,7 +64,7 @@ customContainer.appendChild(gui.domElement);
 
 // ****** SETTINGS FOR INTERACTIVE CONTROLS  ******
 const settings = {
-  acceleration: 1,
+  acceleration: 0,
 };
 gui.add(settings, "acceleration", 0.001, 100);
 
@@ -166,6 +164,14 @@ const planetsOnScene = [
   pluto,
 ];
 
+ship.positionTo(
+  new THREE.Vector3().addVectors(earth.planet.position, {
+    x: 0,
+    y: 0,
+    z: 20_000,
+  })
+);
+
 // Array of planets and atmospheres for raycasting
 const raycastTargets = [
   mercury.planet,
@@ -192,21 +198,28 @@ function animate() {
   cockpit.updatePosition(ship.position());
 
   planetsOnScene.forEach((planetInstance) => {
-    const screenPos = planetInstance.planet.getWorldPosition(worldPos);
-    const distance = camera.position.distanceTo(screenPos);
+    const planetPosInWorld = planetInstance.planet.getWorldPosition(worldPos);
+    const distance = camera.position.distanceTo(planetPosInWorld);
 
-    screenPos.project(camera);
+    const planetPosOnScreen = planetPosInWorld.clone().project(camera);
+    const x = (planetPosOnScreen.x * 0.5 + 0.5) * window.innerWidth;
+    const y = (-planetPosOnScreen.y * 0.5 + 0.5) * window.innerHeight;
 
-    const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
-    const y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
-    const visible = screenPos.z < 1;
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+
+    const cameraToPlanet = new THREE.Vector3()
+      .subVectors(planetPosInWorld, camera.position)
+      .normalize();
+
+    const visible = cameraDirection.dot(cameraToPlanet) > 0;
 
     cockpit.updateLabel({
       id: planetInstance.name,
       x,
       y,
       distance,
-      visible,
+      visible: visible,
     });
   });
 

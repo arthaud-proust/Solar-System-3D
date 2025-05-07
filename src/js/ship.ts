@@ -1,13 +1,4 @@
-import {
-  BoxGeometry,
-  Euler,
-  Mesh,
-  MeshBasicMaterial,
-  Object3D,
-  Quaternion,
-  Vector3,
-  type Camera,
-} from "three";
+import { Euler, Quaternion, Vector3, type Camera } from "three";
 
 type Controls = () => {
   current: () => {
@@ -61,17 +52,6 @@ export const makeShip = ({
   camera: Camera;
   normalSpeedKmh?: number;
 }) => {
-  // Vaisseau (simple cube)
-  const group = new Object3D();
-  const geometry = new BoxGeometry(1, 0.5, 2);
-  const material = new MeshBasicMaterial({
-    color: 0x00ffcc,
-    wireframe: true,
-  });
-  const mesh = new Mesh(geometry, material);
-  //   group.add(mesh);
-
-  // Vitesse et contrôles
   let speed = 0;
   normalSpeedKmh ||= 1000;
   const lightSpeedKmh = 299_792.46;
@@ -90,7 +70,6 @@ export const makeShip = ({
       ? lightSpeedKmh
       : normalSpeedKmh;
 
-    // Gestion de la vitesse
     if (moves.forward) {
       speed = potentialSpeed;
     } else if (moves.backward) {
@@ -112,24 +91,18 @@ export const makeShip = ({
     const quaternion = new Quaternion().setFromEuler(euler);
 
     const direction = new Vector3(0, 0, -1);
-    direction.applyQuaternion(group.quaternion);
-    group.quaternion.multiply(quaternion);
-    group.position.addScaledVector(direction, speed * deltaInS);
+    direction.applyQuaternion(camera.quaternion);
 
-    const cameraOffset = new Vector3(0, 0.2, -0.5); // derrière le nez du vaisseau
-    const worldCameraPos = cameraOffset
-      .clone()
-      .applyQuaternion(group.quaternion)
-      .add(group.position);
-
-    camera.position.copy(worldCameraPos);
-    camera.quaternion.copy(group.quaternion);
+    camera.quaternion.multiply(quaternion);
+    camera.position.addScaledVector(direction, speed * deltaInS);
   };
 
   return {
     update,
     speed: () => speed,
-    position: () => group.position,
-    group,
+    positionTo: (position: { x: number; y: number; z: number }) => {
+      camera.position.set(position.x, position.y, position.z);
+    },
+    position: () => camera.position,
   };
 };
