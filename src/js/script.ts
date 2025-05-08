@@ -2,23 +2,25 @@ import * as dat from "dat.gui";
 import * as THREE from "three";
 
 import { loadBackground } from "./background";
-import { makeCockpit } from "./cockpit";
+
+import { planetsRealScale } from "./planets";
 import { loadAsteroids } from "./planets/asteroids";
 import { makeEarth } from "./planets/earth";
-import { makeSun } from "./planets/sun";
-import { applyPostProcessing } from "./postprocessing";
-import { makeShip } from "./ship";
-
-import { KeyboardControls } from "./controls";
-import { planetsRealScale } from "./planets";
 import { makeJupiter } from "./planets/jupiter";
 import { makeMars } from "./planets/mars";
 import { makeMercury } from "./planets/mercury";
 import { makeNeptune } from "./planets/neptune";
 import { makePluto } from "./planets/pluto";
 import { makeSaturn } from "./planets/saturn";
+import { makeSun } from "./planets/sun";
 import { makeUranus } from "./planets/uranus";
 import { makeVenus } from "./planets/venus";
+
+import { applyPostProcessing } from "./postprocessing";
+
+import { makeCockpit } from "./ship/cockpit";
+import { KeyboardControls } from "./ship/controls";
+import { makeShip } from "./ship/ship";
 
 const planets = planetsRealScale;
 const cockpit = makeCockpit();

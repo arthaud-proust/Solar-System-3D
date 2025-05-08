@@ -4,7 +4,7 @@ import {
   type GLTF,
 } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-const asteroidsPath = "/asteroids/asteroidPack.glb";
+const asteroidsPath = "/models/asteroids/asteroidPack.glb";
 export const loadAsteroids = ({
   asteroidsCount,
   minOrbitRadius,

@@ -18,8 +18,8 @@ export const makeMars = async ({
   moons,
 }: PlanetData) => {
   const moonsModels = {
-    phobos: "/images/mars/phobos.glb",
-    deimos: "/images/mars/deimos.glb",
+    phobos: "/models/mars/phobos.glb",
+    deimos: "/models/mars/deimos.glb",
   };
 
   const mars = makePlanet({
