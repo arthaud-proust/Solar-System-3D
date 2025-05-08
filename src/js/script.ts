@@ -33,6 +33,7 @@ const camera = new THREE.PerspectiveCamera(
   1,
   1_000_000_000
 );
+scene.add(camera);
 
 const ship = makeShip({
   camera,

@@ -9,7 +9,7 @@ export const atmosphereMesh = (atmosphere: {
   const material = new MeshPhongMaterial({
     map: new TextureLoader().load(atmosphere.texture),
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.7,
     depthTest: true,
     depthWrite: false,
   });

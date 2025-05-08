@@ -1,4 +1,12 @@
-import { Euler, Quaternion, Vector3, type Camera } from "three";
+import {
+  Euler,
+  Mesh,
+  Quaternion,
+  Vector3,
+  type Camera,
+  type Group,
+} from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export interface Controls {
   current: () => {
@@ -17,6 +25,28 @@ export interface Controls {
   };
 }
 
+export const make3DCockpit = async () => {
+  const { scene } = await new GLTFLoader().loadAsync(
+    "/models/ship/cockpit.glb"
+  );
+
+  const group = scene.children[0] as unknown as Group;
+  group.scale.setScalar(2);
+
+  group.traverse((child) => {
+    if (!(child instanceof Mesh)) return;
+
+    if (child.name === "Sinonatrix_Cockpit-material002_1") {
+      child.material.opacity = 0.1;
+    }
+
+    child.material.emissiveIntensity = 0.8;
+    child.material.needsUpdate = true;
+  });
+
+  return group;
+};
+
 export const makeShip = ({
   camera,
   normalSpeedKmh,
@@ -27,6 +57,12 @@ export const makeShip = ({
   controls: Controls;
 }) => {
   const speed = new Vector3(0, 0, 0);
+
+  make3DCockpit().then((group) => {
+    camera.add(group);
+    group.rotateZ(Math.PI);
+    group.position.set(0, -2, -2);
+  });
 
   normalSpeedKmh ||= 1000;
   const lightSpeedKmh = 299_792.46;
