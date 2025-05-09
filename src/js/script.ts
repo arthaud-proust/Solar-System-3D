@@ -18,6 +18,7 @@ import { makeVenus } from "./planets/venus";
 
 import { applyPostProcessing } from "./postprocessing";
 
+import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
 import { makeCockpit } from "./ship/cockpit";
 import { makeKeyboardControls } from "./ship/controls";
 import { makeShip } from "./ship/ship";
@@ -41,6 +42,12 @@ const ship = await makeShip({
   makeControls: makeKeyboardControls,
 });
 
+const controls = new PointerLockControls(camera, document.body);
+scene.add(controls.object);
+document.body.addEventListener("click", function () {
+  controls.lock();
+});
+
 ship.positionTo({ x: 100_000_000, y: 100_000_000, z: 0 });
 
 const renderer = new THREE.WebGLRenderer({});
@@ -49,6 +56,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
+renderer.domElement.requestPointerLock();
 
 const cubeTextureLoader = new THREE.CubeTextureLoader();
 

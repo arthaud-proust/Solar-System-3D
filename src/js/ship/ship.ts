@@ -8,21 +8,22 @@ import {
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-export type Controls = (events: { onToggleCockpit: () => void }) => {
-  current: () => {
-    rollLeft: boolean;
-    rollRight: boolean;
-    yawLeft: boolean;
-    yawRight: boolean;
-    pitchUp: boolean;
-    pitchDown: boolean;
-    lightSpeed: boolean;
-    supraLightSpeed: boolean;
-    forward: boolean;
-    backward: boolean;
-    left: boolean;
-    right: boolean;
-  };
+const controlNames = [
+  "roll",
+  "yaw",
+  "pitch",
+  "lightSpeed",
+  "supraLightSpeed",
+  "forward",
+  "moveZ",
+  "moveX",
+  "toggleCockpit",
+] as const;
+type ControlName = (typeof controlNames)[number];
+type ControlValues = Partial<Record<ControlName, number>>;
+
+export type Controls = (update: (values: ControlValues) => void) => {
+  current: () => ControlValues;
 };
 
 export const make3DCockpit = async () => {
@@ -63,60 +64,70 @@ export const makeShip = async ({
   cockpit.rotateZ(Math.PI);
   cockpit.position.set(0, -2, -2);
 
-  const controls = makeControls({
-    onToggleCockpit: () => {
-      cockpit.visible = !cockpit.visible;
-    },
-  });
-
   normalSpeedKmh ||= 1000;
   const lightSpeedKmh = 299_792.46;
   const supraLightSpeedKmh = 50_000_000;
 
   const baseRotationSpeed = 1;
 
-  const update = (deltaInS: number) => {
-    const moves = controls.current();
-
-    const potentialSpeed = moves.supraLightSpeed
-      ? supraLightSpeedKmh
-      : moves.lightSpeed
-      ? lightSpeedKmh
-      : normalSpeedKmh;
-
+  const moveRaw = (moves: {
+    roll: number;
+    pitch: number;
+    yaw: number;
+    x: number;
+    z: number;
+  }) => {
     const euler = new Euler(0, 0, 0, "YXZ");
 
-    const rotationSpeed = baseRotationSpeed * deltaInS;
-    if (moves.pitchDown) euler.x -= rotationSpeed;
-    if (moves.pitchUp) euler.x += rotationSpeed;
-    if (moves.yawLeft) euler.y += rotationSpeed;
-    if (moves.yawRight) euler.y -= rotationSpeed;
-    if (moves.rollLeft) euler.z += rotationSpeed;
-    if (moves.rollRight) euler.z -= rotationSpeed;
+    euler.x += moves.pitch;
+    euler.y += -moves.yaw;
+    euler.z += -moves.roll;
 
     const rotation = new Quaternion().setFromEuler(euler);
 
-    if (moves.forward) {
-      speed.z = -potentialSpeed;
-    } else if (moves.backward) {
-      speed.z = potentialSpeed;
-    } else {
-      speed.z = 0;
-    }
-
-    if (moves.left) {
-      speed.x = -potentialSpeed;
-    } else if (moves.right) {
-      speed.x = potentialSpeed;
-    } else {
-      speed.x = 0;
-    }
+    speed.x = moves.x;
+    speed.z = -moves.z;
 
     const move = speed.clone();
     move.applyQuaternion(camera.quaternion);
 
     camera.quaternion.multiply(rotation);
-    camera.position.addScaledVector(move, deltaInS);
+    camera.position.add(move);
+  };
+
+  const controls = makeControls((values) => {
+    if (values.toggleCockpit) {
+      cockpit.visible = !cockpit.visible;
+    }
+
+    moveRaw({
+      pitch: values.pitch ?? 0,
+      yaw: values.yaw ?? 0,
+      roll: values.roll ?? 0,
+      x: values.moveX ?? 0,
+      z: values.moveZ ?? 0,
+    });
+  });
+
+  const update = (deltaInS: number) => {
+    const values = controls.current();
+
+    const unitMoveSpeed = values.supraLightSpeed
+      ? supraLightSpeedKmh
+      : values.lightSpeed
+      ? lightSpeedKmh
+      : normalSpeedKmh;
+
+    const rotationSpeed = baseRotationSpeed * deltaInS;
+    const moveSpeed = unitMoveSpeed * deltaInS;
+
+    moveRaw({
+      pitch: (values.pitch ?? 0) * rotationSpeed,
+      yaw: (values.yaw ?? 0) * rotationSpeed,
+      roll: (values.roll ?? 0) * rotationSpeed,
+      x: (values.moveX ?? 0) * moveSpeed,
+      z: (values.moveZ ?? 0) * moveSpeed,
+    });
   };
 
   return {
