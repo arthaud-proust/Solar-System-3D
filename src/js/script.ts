@@ -1,4 +1,4 @@
-import * as dat from "dat.gui";
+import GUI from "lil-gui";
 import * as THREE from "three";
 
 import { loadBackground } from "./background";
@@ -69,7 +69,7 @@ const { outlinePass, composer } = applyPostProcessing({
 scene.background = loadBackground({ cubeTextureLoader });
 
 // ******  CONTROLS  ******
-const gui = new dat.GUI({ autoPlace: false });
+const gui = new GUI({ autoPlace: false });
 const customContainer = document.getElementById("gui-container")!;
 customContainer.appendChild(gui.domElement);
 
