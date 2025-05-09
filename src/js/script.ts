@@ -19,7 +19,7 @@ import { makeVenus } from "./planets/venus";
 import { applyPostProcessing } from "./postprocessing";
 
 import { makeCockpit } from "./ship/cockpit";
-import { KeyboardControls } from "./ship/controls";
+import { makeKeyboardControls } from "./ship/controls";
 import { makeShip } from "./ship/ship";
 
 const planets = planetsRealScale;
@@ -35,10 +35,10 @@ const camera = new THREE.PerspectiveCamera(
 );
 scene.add(camera);
 
-const ship = makeShip({
+const ship = await makeShip({
   camera,
   normalSpeedKmh: 1000,
-  controls: new KeyboardControls(),
+  makeControls: makeKeyboardControls,
 });
 
 ship.positionTo({ x: 100_000_000, y: 100_000_000, z: 0 });

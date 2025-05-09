@@ -1,33 +1,41 @@
 import type { Controls } from "./ship";
 
-export class KeyboardControls implements Controls {
-  keys: Record<string, boolean> = {};
+export const makeKeyboardControls: Controls = (events) => {
+  const keys: Record<string, boolean> = {};
 
-  constructor() {
-    document.addEventListener(
-      "keydown",
-      (e) => (this.keys[e.key.toLowerCase()] = true)
-    );
-    document.addEventListener(
-      "keyup",
-      (e) => (this.keys[e.key.toLowerCase()] = false)
-    );
-  }
+  document.addEventListener("keypress", (e) => {
+    if (e.key.toLowerCase() == "c") {
+      events.onToggleCockpit();
+    }
+  });
 
-  current() {
+  document.addEventListener(
+    "keydown",
+    (e) => (keys[e.key.toLowerCase()] = true)
+  );
+  document.addEventListener(
+    "keyup",
+    (e) => (keys[e.key.toLowerCase()] = false)
+  );
+
+  const current = () => {
     return {
-      rollLeft: this.keys["a"],
-      rollRight: this.keys["e"],
-      yawLeft: this.keys["q"],
-      yawRight: this.keys["d"],
-      pitchUp: this.keys["s"],
-      pitchDown: this.keys["z"],
-      lightSpeed: this.keys["shift"],
-      supraLightSpeed: this.keys[" "],
-      forward: this.keys["arrowup"],
-      left: this.keys["arrowleft"],
-      right: this.keys["arrowright"],
-      backward: this.keys["arrowdown"],
+      rollLeft: keys["a"],
+      rollRight: keys["e"],
+      yawLeft: keys["q"],
+      yawRight: keys["d"],
+      pitchUp: keys["s"],
+      pitchDown: keys["z"],
+      lightSpeed: keys["shift"],
+      supraLightSpeed: keys[" "],
+      forward: keys["arrowup"],
+      left: keys["arrowleft"],
+      right: keys["arrowright"],
+      backward: keys["arrowdown"],
     };
-  }
-}
+  };
+
+  return {
+    current,
+  };
+};

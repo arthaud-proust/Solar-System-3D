@@ -8,7 +8,7 @@ import {
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-export interface Controls {
+export type Controls = (events: { onToggleCockpit: () => void }) => {
   current: () => {
     rollLeft: boolean;
     rollRight: boolean;
@@ -23,7 +23,7 @@ export interface Controls {
     left: boolean;
     right: boolean;
   };
-}
+};
 
 export const make3DCockpit = async () => {
   const { scene } = await new GLTFLoader().loadAsync(
@@ -47,21 +47,26 @@ export const make3DCockpit = async () => {
   return group;
 };
 
-export const makeShip = ({
+export const makeShip = async ({
   camera,
   normalSpeedKmh,
-  controls,
+  makeControls,
 }: {
   camera: Camera;
   normalSpeedKmh?: number;
-  controls: Controls;
+  makeControls: Controls;
 }) => {
   const speed = new Vector3(0, 0, 0);
 
-  make3DCockpit().then((group) => {
-    camera.add(group);
-    group.rotateZ(Math.PI);
-    group.position.set(0, -2, -2);
+  const cockpit = await make3DCockpit();
+  camera.add(cockpit);
+  cockpit.rotateZ(Math.PI);
+  cockpit.position.set(0, -2, -2);
+
+  const controls = makeControls({
+    onToggleCockpit: () => {
+      cockpit.visible = !cockpit.visible;
+    },
   });
 
   normalSpeedKmh ||= 1000;
