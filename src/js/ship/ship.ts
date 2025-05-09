@@ -57,14 +57,14 @@ export const makeShip = async ({
   normalSpeedKmh?: number;
   makeControls: Controls;
 }) => {
-  const speed = new Vector3(0, 0, 0);
+  const displaySpeed = new Vector3(0, 0, 0);
 
   const cockpit = await make3DCockpit();
   camera.add(cockpit);
   cockpit.rotateZ(Math.PI);
   cockpit.position.set(0, -2, -2);
 
-  normalSpeedKmh ||= 1000;
+  normalSpeedKmh ||= 100;
   const lightSpeedKmh = 299_792.46;
   const supraLightSpeedKmh = 50_000_000;
 
@@ -85,10 +85,9 @@ export const makeShip = async ({
 
     const rotation = new Quaternion().setFromEuler(euler);
 
-    speed.x = moves.x;
-    speed.z = -moves.z;
-
-    const move = speed.clone();
+    const move = new Vector3(0, 0, 0);
+    move.x = moves.x;
+    move.z = -moves.z;
     move.applyQuaternion(camera.quaternion);
 
     camera.quaternion.multiply(rotation);
@@ -119,20 +118,22 @@ export const makeShip = async ({
       : normalSpeedKmh;
 
     const rotationSpeed = baseRotationSpeed * deltaInS;
-    const moveSpeed = unitMoveSpeed * deltaInS;
+
+    displaySpeed.x = (values.moveX ?? 0) * unitMoveSpeed;
+    displaySpeed.z = (values.moveZ ?? 0) * unitMoveSpeed;
 
     moveRaw({
       pitch: (values.pitch ?? 0) * rotationSpeed,
       yaw: (values.yaw ?? 0) * rotationSpeed,
       roll: (values.roll ?? 0) * rotationSpeed,
-      x: (values.moveX ?? 0) * moveSpeed,
-      z: (values.moveZ ?? 0) * moveSpeed,
+      x: displaySpeed.x * deltaInS,
+      z: displaySpeed.z * deltaInS,
     });
   };
 
   return {
     update,
-    speed: (): number => speed.length(),
+    speed: (): number => displaySpeed.length(),
     positionTo: (position: { x: number; y: number; z: number }) => {
       camera.position.set(position.x, position.y, position.z);
     },

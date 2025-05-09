@@ -38,7 +38,6 @@ scene.add(camera);
 
 const ship = await makeShip({
   camera,
-  normalSpeedKmh: 1000,
   makeControls: makeKeyboardControls,
 });
 
