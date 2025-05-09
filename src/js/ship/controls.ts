@@ -59,10 +59,22 @@ export const makeKeyboardAndMouseControls: Controls = (update) => {
   const keyboardControls = makeKeyboardControls(update);
   const mouseSensitivity = 0.002;
 
+  let isPointerLocked = false;
+
+  document.body.addEventListener("click", () => {
+    document.body.requestPointerLock();
+  });
+
+  document.addEventListener("pointerlockchange", () => {
+    isPointerLocked = document.pointerLockElement === document.body;
+  });
+
   document.addEventListener("mousemove", (event) => {
+    if (!isPointerLocked) return;
+
     update({
-      roll: event.movementX * mouseSensitivity,
-      pitch: event.movementY * mouseSensitivity,
+      yaw: event.movementX * mouseSensitivity,
+      pitch: -event.movementY * mouseSensitivity,
     });
   });
 

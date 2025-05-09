@@ -1,11 +1,4 @@
-import {
-  Euler,
-  Mesh,
-  Quaternion,
-  Vector3,
-  type Camera,
-  type Group,
-} from "three";
+import { Euler, Group, Mesh, Quaternion, Vector3, type Camera } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 const controlNames = [
@@ -77,20 +70,36 @@ export const makeShip = async ({
     x: number;
     z: number;
   }) => {
-    const euler = new Euler(0, 0, 0, "YXZ");
+    const rollQuaternion = new Quaternion().setFromEuler(
+      new Euler(0, 0, -moves.roll, "YXZ")
+    );
+    camera.quaternion.multiply(rollQuaternion);
 
-    euler.x += moves.pitch;
-    euler.y += -moves.yaw;
-    euler.z += -moves.roll;
+    const upCamAxis = new Vector3(0, 1, 0)
+      .applyQuaternion(camera.quaternion)
+      .normalize();
 
-    const rotation = new Quaternion().setFromEuler(euler);
+    const yawQuaternion = new Quaternion().setFromAxisAngle(
+      upCamAxis,
+      -moves.yaw
+    );
+
+    const rightCamAxis = new Vector3(1, 0, 0)
+      .applyQuaternion(camera.quaternion)
+      .normalize();
+    const pitchQuaternion = new Quaternion().setFromAxisAngle(
+      rightCamAxis,
+      moves.pitch
+    );
+
+    camera.applyQuaternion(yawQuaternion);
+    camera.applyQuaternion(pitchQuaternion);
 
     const move = new Vector3(0, 0, 0);
     move.x = moves.x;
     move.z = -moves.z;
     move.applyQuaternion(camera.quaternion);
 
-    camera.quaternion.multiply(rotation);
     camera.position.add(move);
   };
 
@@ -138,5 +147,6 @@ export const makeShip = async ({
       camera.position.set(position.x, position.y, position.z);
     },
     position: () => camera.position,
+    camera,
   };
 };

@@ -18,9 +18,11 @@ import { makeVenus } from "./planets/venus";
 
 import { applyPostProcessing } from "./postprocessing";
 
-import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls.js";
 import { makeCockpit } from "./ship/cockpit";
-import { makeKeyboardControls } from "./ship/controls";
+import {
+  makeKeyboardAndMouseControls,
+  makeKeyboardControls,
+} from "./ship/controls";
 import { makeShip } from "./ship/ship";
 
 const planets = planetsRealScale;
@@ -34,20 +36,14 @@ const camera = new THREE.PerspectiveCamera(
   1,
   1_000_000_000
 );
-scene.add(camera);
 
 const ship = await makeShip({
   camera,
-  makeControls: makeKeyboardControls,
-});
-
-const controls = new PointerLockControls(camera, document.body);
-scene.add(controls.object);
-document.body.addEventListener("click", function () {
-  controls.lock();
+  makeControls: makeKeyboardAndMouseControls,
 });
 
 ship.positionTo({ x: 100_000_000, y: 100_000_000, z: 0 });
+scene.add(camera);
 
 const renderer = new THREE.WebGLRenderer({});
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -56,6 +52,27 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 renderer.domElement.requestPointerLock();
+
+// CameraControls.install({ THREE: THREE });
+// const EPS = 1e-5;
+// // in order to archive FPS look, set EPSILON for the distance to the center
+// camera.position.set(0, 0, EPS);
+// const cameraControls = new CameraControls(camera, renderer.domElement);
+// cameraControls.minDistance = cameraControls.maxDistance = 1;
+// cameraControls.azimuthRotateSpeed = -0.3; // negative value to invert rotation direction
+// cameraControls.polarRotateSpeed = -0.3; // negative value to invert rotation direction
+// cameraControls.truckSpeed = 10;
+// cameraControls.saveState();
+// cameraControls.setOrbitPoint();
+// document.body.addEventListener("click", () => {
+//   cameraControls.lockPointer();
+// });
+
+// const controls = new PointerLockControls(camera, document.body);
+// scene.add(controls.object);
+// document.body.addEventListener("click", function () {
+//   controls.lock();
+// });
 
 const cubeTextureLoader = new THREE.CubeTextureLoader();
 
@@ -228,6 +245,8 @@ function updateLabelForStart(star: { name: string; mesh: THREE.Mesh }) {
 
 function animate() {
   const deltaInS = clock.getDelta();
+
+  // cameraControls.update(deltaInS);
 
   ship.update(deltaInS);
 
