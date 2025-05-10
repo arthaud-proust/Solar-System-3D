@@ -1,6 +1,39 @@
 const round = (n: number, precision: number = 3) =>
   Math.round(n * 10 ** precision) / 10 ** precision;
 
+const toHumanReadable = (n: number, precision: number = 0) => {
+  if (n > 1_000_000_000) {
+    return `${round(n / 1_000_000_000, precision)} Billions`;
+  }
+
+  if (n > 1_000_000) {
+    return `${round(n / 1_000_000, precision)} Millions`;
+  }
+
+  return round(n, precision);
+};
+
+const labels = [
+  "sun",
+  "mercury",
+  "venus",
+  "earth",
+  "moon",
+  "mars",
+  "phobos",
+  "deimos",
+  "jupiter",
+  "ganymede",
+  "callisto",
+  "europa",
+  "io",
+  "saturn",
+  "uranus",
+  "neptune",
+  "pluto",
+] as const;
+type LabelKey = (typeof labels)[number];
+
 export const makeCockpit = () => {
   const cockpitEl = document.getElementById("cockpit") as HTMLElement;
 
@@ -18,25 +51,25 @@ export const makeCockpit = () => {
     z: cockpitEl.querySelector(".position-z") as HTMLElement,
   };
 
-  const labelEls = {
-    sun: cockpitEl.querySelector(".sun") as HTMLElement,
-    mercury: cockpitEl.querySelector(".mercury") as HTMLElement,
-    venus: cockpitEl.querySelector(".venus") as HTMLElement,
-    earth: cockpitEl.querySelector(".earth") as HTMLElement,
-    moon: cockpitEl.querySelector(".moon") as HTMLElement,
-    mars: cockpitEl.querySelector(".mars") as HTMLElement,
-    phobos: cockpitEl.querySelector(".phobos") as HTMLElement,
-    deimos: cockpitEl.querySelector(".deimos") as HTMLElement,
-    jupiter: cockpitEl.querySelector(".jupiter") as HTMLElement,
-    ganymede: cockpitEl.querySelector(".ganymede") as HTMLElement,
-    callisto: cockpitEl.querySelector(".callisto") as HTMLElement,
-    europa: cockpitEl.querySelector(".europa") as HTMLElement,
-    io: cockpitEl.querySelector(".io") as HTMLElement,
-    saturn: cockpitEl.querySelector(".saturn") as HTMLElement,
-    uranus: cockpitEl.querySelector(".uranus") as HTMLElement,
-    neptune: cockpitEl.querySelector(".neptune") as HTMLElement,
-    pluto: cockpitEl.querySelector(".pluto") as HTMLElement,
-  };
+  const labelsEl = cockpitEl.querySelector(".labels") as HTMLElement;
+  const labelEls = Object.fromEntries(
+    labels.map((name, index) => {
+      const el = document.createElement("div");
+      labelsEl.append(el);
+
+      const angle = ((index + 1) * 360) / labels.length;
+
+      el.className = name;
+      el.style.setProperty("--angle", `${angle}deg`);
+      el.innerHTML = `
+      <div>
+      <span>${name}</span>
+      <span class="distance"></span>
+      </div>
+      `;
+      return [name, el];
+    })
+  ) as Record<LabelKey, HTMLDivElement>;
 
   const updateSelectedSpeed = (speed: { name: string; kmPerS: number }) => {
     selectedSpeedNameEl.innerText = speed.name;
@@ -66,10 +99,9 @@ export const makeCockpit = () => {
 
     labelEl.style.left = `${label.x}px`;
     labelEl.style.top = `${label.y}px`;
-    labelEl.querySelector(".distance").innerText = `${round(
-      label.distance,
-      0
-    ).toLocaleString()} km`;
+    labelEl.querySelector(".distance").innerText = `${toHumanReadable(
+      label.distance
+    )} km`;
   };
 
   return {

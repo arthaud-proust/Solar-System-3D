@@ -11,12 +11,16 @@
   height: 100%
 
   .top
-    background: black
+    background: #000000a7
     padding: 1rem
     color: white
     position: absolute
     top: 0
     left: 0
+    font-size: 0.8rem
+
+    ul
+      list-style: none
 
   .bottom
     background: black
@@ -27,19 +31,33 @@
     left: 0
 
   .labels > div
-    white-space: nowrap
-    transform: translate(-50%, -100%)
-    color: white
+    --angle: 0deg
+    transform-origin: bottom center
+    transform: translate(-50%, -100%) rotate(var(--angle))
+
     position: fixed
-    display: flex
     flex-direction: column
     text-align: center
     justify-content: center
     align-items: center
 
+    font-size: 0.8rem
+
+    &>div
+      aspect-ratio: 1/1
+      white-space: nowrap
+      color: white
+
+      display: flex
+      flex-direction: column
+      text-align: center
+      justify-content: center
+      align-items: center
+      transform: rotate(calc(-1 * var(--angle)))
+
     &::after
       margin-top: 8px
       content: ''
-      height: 3rem
+      height: 10rem
       width: 1px
-      background: #ffffffaa
+      background: #ffffff61
