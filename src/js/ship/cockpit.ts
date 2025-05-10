@@ -5,6 +5,13 @@ export const makeCockpit = () => {
   const cockpitEl = document.getElementById("cockpit") as HTMLElement;
 
   const speedEl = cockpitEl.querySelector(".speed") as HTMLElement;
+  const selectedSpeedEl = cockpitEl.querySelector(
+    ".selected-speed"
+  ) as HTMLElement;
+  const selectedSpeedNameEl = cockpitEl.querySelector(
+    ".selected-speed-name"
+  ) as HTMLElement;
+
   const positionsEl = {
     x: cockpitEl.querySelector(".position-x") as HTMLElement,
     y: cockpitEl.querySelector(".position-y") as HTMLElement,
@@ -29,6 +36,11 @@ export const makeCockpit = () => {
     uranus: cockpitEl.querySelector(".uranus") as HTMLElement,
     neptune: cockpitEl.querySelector(".neptune") as HTMLElement,
     pluto: cockpitEl.querySelector(".pluto") as HTMLElement,
+  };
+
+  const updateSelectedSpeed = (speed: { name: string; kmPerS: number }) => {
+    selectedSpeedNameEl.innerText = speed.name;
+    selectedSpeedEl.innerText = round(speed.kmPerS).toString();
   };
 
   const updateSpeed = (speed: number) =>
@@ -61,6 +73,7 @@ export const makeCockpit = () => {
   };
 
   return {
+    updateSelectedSpeed,
     updateSpeed,
     updatePosition,
     updateLabel,

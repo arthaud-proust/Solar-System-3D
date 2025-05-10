@@ -1,12 +1,12 @@
-import { Euler, Group, Mesh, Quaternion, Vector3, type Camera } from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { Euler, Quaternion, Vector3, type PerspectiveCamera } from "three";
+import { makeGearbox } from "./gearbox";
+import { make3DCockpit } from "./shipCockpit";
 
 const controlNames = [
   "roll",
   "yaw",
   "pitch",
-  "lightSpeed",
-  "supraLightSpeed",
+  "speed",
   "forward",
   "moveZ",
   "moveX",
@@ -19,47 +19,28 @@ export type Controls = (update: (values: ControlValues) => void) => {
   current: () => ControlValues;
 };
 
-export const make3DCockpit = async () => {
-  const { scene } = await new GLTFLoader().loadAsync(
-    "/models/ship/cockpit.glb"
-  );
-
-  const group = scene.children[0] as unknown as Group;
-  group.scale.setScalar(2);
-
-  group.traverse((child) => {
-    if (!(child instanceof Mesh)) return;
-
-    if (child.name === "Sinonatrix_Cockpit-material002_1") {
-      child.material.opacity = 0.1;
-    }
-
-    child.material.emissiveIntensity = 0.8;
-    child.material.needsUpdate = true;
-  });
-
-  return group;
-};
+const cameraFOVForSpeed = Object.freeze({
+  none: 70,
+  normal: 72,
+  light: 75,
+  supraLight: 80,
+});
 
 export const makeShip = async ({
   camera,
-  normalSpeedKmh,
   makeControls,
 }: {
-  camera: Camera;
-  normalSpeedKmh?: number;
+  camera: PerspectiveCamera;
   makeControls: Controls;
 }) => {
   const displaySpeed = new Vector3(0, 0, 0);
 
-  const cockpit = await make3DCockpit();
-  camera.add(cockpit);
-  cockpit.rotateZ(Math.PI);
-  cockpit.position.set(0, -2, -2);
+  const cockpit = await make3DCockpit({
+    basePosition: { x: 0, y: -2, z: -1 },
+  });
+  camera.add(cockpit.group);
 
-  normalSpeedKmh ||= 100;
-  const lightSpeedKmh = 299_792.46;
-  const supraLightSpeedKmh = 50_000_000;
+  const gearbox = makeGearbox();
 
   const baseRotationSpeed = 1;
 
@@ -105,7 +86,11 @@ export const makeShip = async ({
 
   const controls = makeControls((values) => {
     if (values.toggleCockpit) {
-      cockpit.visible = !cockpit.visible;
+      cockpit.group.visible = !cockpit.group.visible;
+    }
+
+    if (values.speed) {
+      values.speed > 0 ? gearbox.up() : gearbox.down();
     }
 
     moveRaw({
@@ -117,19 +102,28 @@ export const makeShip = async ({
     });
   });
 
-  const update = (deltaInS: number) => {
+  const update = (deltaInS: number, elapsedInS: number) => {
     const values = controls.current();
 
-    const unitMoveSpeed = values.supraLightSpeed
-      ? supraLightSpeedKmh
-      : values.lightSpeed
-      ? lightSpeedKmh
-      : normalSpeedKmh;
+    const speed = gearbox.current();
 
     const rotationSpeed = baseRotationSpeed * deltaInS;
 
-    displaySpeed.x = (values.moveX ?? 0) * unitMoveSpeed;
-    displaySpeed.z = (values.moveZ ?? 0) * unitMoveSpeed;
+    displaySpeed.x = (values.moveX ?? 0) * speed.kmPerS;
+    displaySpeed.z = (values.moveZ ?? 0) * speed.kmPerS;
+
+    if (displaySpeed.length()) {
+      camera.fov = cameraFOVForSpeed[speed.name];
+    } else {
+      camera.fov = cameraFOVForSpeed["none"];
+    }
+
+    cockpit.shake({
+      speedKmPerS: displaySpeed.length(),
+      elapsedInS,
+    });
+
+    camera.updateProjectionMatrix();
 
     moveRaw({
       pitch: (values.pitch ?? 0) * rotationSpeed,
@@ -142,6 +136,7 @@ export const makeShip = async ({
 
   return {
     update,
+    selectedSpeed: () => gearbox.current(),
     speed: (): number => displaySpeed.length(),
     positionTo: (position: { x: number; y: number; z: number }) => {
       camera.position.set(position.x, position.y, position.z);

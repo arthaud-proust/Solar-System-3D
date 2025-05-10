@@ -7,6 +7,14 @@ export const makeKeyboardControls: Controls = (update) => {
     if (e.key.toLowerCase() == "c") {
       update({ toggleCockpit: 1 });
     }
+
+    if (e.key.toLowerCase() == "e") {
+      update({ speed: 1 });
+    }
+
+    if (e.key.toLowerCase() == "a") {
+      update({ speed: -1 });
+    }
   });
 
   document.addEventListener(
@@ -23,14 +31,6 @@ export const makeKeyboardControls: Controls = (update) => {
     if (keys["q"]) roll -= 1;
     if (keys["d"]) roll += 1;
 
-    // let yaw = 0;
-    // if (keys["q"]) yaw -= 1;
-    // if (keys["d"]) yaw += 1;
-
-    // let pitch = 0;
-    // if (keys["z"]) pitch -= 1;
-    // if (keys["s"]) pitch += 1;
-
     let moveX = 0;
     if (keys["arrowleft"]) moveX -= 1;
     if (keys["arrowright"]) moveX += 1;
@@ -41,10 +41,6 @@ export const makeKeyboardControls: Controls = (update) => {
 
     return {
       roll,
-      // yaw,
-      // pitch,
-      lightSpeed: +keys["shift"],
-      supraLightSpeed: +keys[" "],
       moveX,
       moveZ,
     };

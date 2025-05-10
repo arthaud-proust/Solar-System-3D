@@ -19,10 +19,7 @@ import { makeVenus } from "./planets/venus";
 import { applyPostProcessing } from "./postprocessing";
 
 import { makeCockpit } from "./ship/cockpit";
-import {
-  makeKeyboardAndMouseControls,
-  makeKeyboardControls,
-} from "./ship/controls";
+import { makeKeyboardAndMouseControls } from "./ship/controls";
 import { makeShip } from "./ship/ship";
 
 const planets = planetsRealScale;
@@ -245,11 +242,11 @@ function updateLabelForStart(star: { name: string; mesh: THREE.Mesh }) {
 
 function animate() {
   const deltaInS = clock.getDelta();
+  const elapsedInS = clock.getElapsedTime();
 
-  // cameraControls.update(deltaInS);
+  ship.update(deltaInS, elapsedInS);
 
-  ship.update(deltaInS);
-
+  cockpit.updateSelectedSpeed(ship.selectedSpeed());
   cockpit.updateSpeed(ship.speed());
   cockpit.updatePosition(ship.position());
 
